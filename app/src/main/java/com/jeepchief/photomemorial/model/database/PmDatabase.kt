@@ -4,10 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.jeepchief.photomemorial.util.Converters
 
-@Database(entities = [], version = 1, exportSchema = false)
+@Database(entities = [PhotoEntity::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class PmDatabase : RoomDatabase() {
     // todo: Will be implement dao.
     abstract fun getPmDAO() : PmDAO

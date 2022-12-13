@@ -3,9 +3,11 @@ package com.jeepchief.photomemorial.model.database
 import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 @Entity
 data class PhotoEntity(
+    @PrimaryKey
     @ColumnInfo(name = "photo")
     var photo: Bitmap,
 
