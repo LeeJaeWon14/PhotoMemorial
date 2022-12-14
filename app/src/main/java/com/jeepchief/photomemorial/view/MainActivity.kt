@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Color
 import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
@@ -93,13 +94,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val exif = ExifInterface(path)
             exif.latLong?.let {
                 val address = getAddress(it[0], it[1])
-                Log.e("address is $address")
+                Log.e("after address is $address")
                 val marker = Marker()
                 marker.apply {
                     position = LatLng(it[0], it[1])
                     isVisible = true
                     map = naverMap
                     onClickListener = markerListener
+                    iconTintColor = Color.RED
                 }
 
                 infoWindow = InfoWindow().apply {
@@ -256,6 +258,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun getAddress(lat: Double, lon: Double) : String {
         val geo = Geocoder(this)
         val addressList = geo.getFromLocation(lat, lon, 10)
+        Log.e("before address is ${addressList[0].getAddressLine(0).toString()}")
+
+        val address = addressList[0].getAddressLine(0).split(" ")
+//        if(address.split(" 대한민국")[0].isNotEmpty()) {
+//            address.toMutableList().reverse()
+//            return address
+//        }
+        if(address[address.lastIndex] == "대한민국") {
+            val builder = StringBuilder()
+            for(i in address.lastIndex -1 downTo 0) {
+                builder.append("${address[i]} ")
+            }
+            return builder.toString()
+        }
         return addressList[0].getAddressLine(0).toString().split("대한민국 ")[1]
     }
 }
