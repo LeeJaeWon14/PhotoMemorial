@@ -5,7 +5,7 @@ import androidx.room.*
 @Dao
 interface PmDAO {
     @Query("SELECT * FROM PhotoEntity")
-    fun selectPhoto() : PhotoEntity
+    fun selectPhoto() : List<PhotoEntity>
 
     @Insert
     fun insertPhoto(entity: PhotoEntity)

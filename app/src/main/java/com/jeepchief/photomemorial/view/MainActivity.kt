@@ -4,24 +4,27 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
+import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
+import androidx.appcompat.app.AlertDialog
 import androidx.exifinterface.media.ExifInterface
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.databinding.ActivityMainBinding
-import com.jeepchief.photomemorial.util.GeoDegree
+import com.jeepchief.photomemorial.model.database.PhotoEntity
+import com.jeepchief.photomemorial.model.database.PmDatabase
+import com.jeepchief.photomemorial.util.Log
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
@@ -30,7 +33,11 @@ import com.naver.maps.map.MapFragment
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.NaverMapSdk
 import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.Overlay
+import kotlinx.coroutines.*
+import okhttp3.Dispatcher
 import java.io.File
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -39,6 +46,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var mapFragment: MapFragment
     private lateinit var naverMap: NaverMap
+    private lateinit var infoWindow: InfoWindow
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +66,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 fm.beginTransaction().add(R.id.fm_map, it).commit()
             }
 
+        // init UI
         binding.apply {
             btnAddPhoto.setOnClickListener {
                 imagePickLauncher.launch("image/*")
@@ -68,32 +77,102 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val imagePickLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { result ->
         result?.let {
             it.forEach { uri ->
-
-                getAbsolutePath(this@MainActivity, uri)?.let { path ->
-                    val exif = ExifInterface(path)
-//                    val degree = GeoDegree(exif)
-                    val marker = Marker()
-                    marker.apply {
-                        position = LatLng(exif.latLong?.get(0)!!, exif.latLong?.get(1)!!)
-                        isVisible = true
-                        map = naverMap
-                    }
+                CoroutineScope(Dispatchers.IO).launch {
+                    PmDatabase.getInstance(this@MainActivity).getPmDAO()
+                        .insertPhoto(PhotoEntity(
+                            uri, null, null, null
+                        ))
                 }
+                makeOverlay(uri)
             }
-
         }
     }
 
+    private fun makeOverlay(uri: Uri) {
+        getAbsolutePath(this@MainActivity, uri)?.let { path ->
+            val exif = ExifInterface(path)
+            exif.latLong?.let {
+                val address = getAddress(it[0], it[1])
+                Log.e("address is $address")
+                val marker = Marker()
+                marker.apply {
+                    position = LatLng(it[0], it[1])
+                    isVisible = true
+                    map = naverMap
+                    onClickListener = markerListener
+                }
+
+                infoWindow = InfoWindow().apply {
+                    adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
+                        override fun getText(p0: InfoWindow): CharSequence {
+                            return address
+                        }
+                    }
+                    onClickListener = Overlay.OnClickListener { overlay ->
+                        val window = overlay as InfoWindow
+
+                        val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
+                        val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
+                            setView(dlgView)
+                            setCancelable(false)
+                        }
+
+                        dlgView.run {
+                            findViewById<ImageView>(R.id.iv_infowindow).run {
+                                setImageURI(uri)
+                                setOnClickListener { _->
+                                    dlg.dismiss()
+                                }
+                            }
+//                                    findViewById<Button>(R.id.btn_close_dialog).setOnClickListener { _->
+//                                        dlg.dismiss()
+//                                    }
+                        }
+
+                        dlg.show()
+                        true
+                    }
+                }
+            } ?: run {
+                Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private var markerListener = Overlay.OnClickListener { overlay ->
+        val marker = overlay as Marker
+        marker.infoWindow?.close() ?: run {
+            infoWindow.open(marker)
+        }
+
+        true
+    }
+
+
     @UiThread
     override fun onMapReady(map: NaverMap) {
-        // For map setting.
-        this.naverMap = map.apply {
-            cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
-            locationOverlay.apply {
-                isVisible = true
-                position = LatLng(viewModel.location.value!!)
+        CoroutineScope(Dispatchers.IO).launch {
+            // todo: Load images from room
+            val entities = PmDatabase.getInstance(this@MainActivity).getPmDAO()
+                .selectPhoto()
+            if(entities.isEmpty()) return@launch
+            entities.forEach { entity ->
+                withContext(Dispatchers.Main) { makeOverlay(entity.photo) }
             }
-            locationTrackingMode = LocationTrackingMode.NoFollow
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            // For map setting.
+            this@MainActivity.naverMap = map.apply {
+                cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
+                locationOverlay.apply {
+                    isVisible = true
+                    position = LatLng(viewModel.location.value!!)
+                }
+                locationTrackingMode = LocationTrackingMode.NoFollow
+                setOnMapClickListener { _, _ ->
+                    infoWindow.close()
+                }
+            }
         }
     }
 
@@ -128,11 +207,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+//    @RequiresApi(Build.VERSION_CODES.Q)
     private fun checkPermission() {
         val permissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
-//                Toast.makeText(this@MainActivity, "Granted", Toast.LENGTH_SHORT).show()
                 initLocation()
             }
 
@@ -173,5 +251,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val uri = Uri.fromFile(File(path))
         cursor?.close()
         return path
+    }
+
+    private fun getAddress(lat: Double, lon: Double) : String {
+        val geo = Geocoder(this)
+        val addressList = geo.getFromLocation(lat, lon, 10)
+        return addressList[0].getAddressLine(0).toString().split("대한민국 ")[1]
     }
 }
