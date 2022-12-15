@@ -102,17 +102,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     map = naverMap
                     onClickListener = markerListener
                     iconTintColor = Color.RED
+                    tag = address
                 }
 
                 infoWindow = InfoWindow().apply {
-                    adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
-                        override fun getText(p0: InfoWindow): CharSequence {
-                            return address
-                        }
-                    }
                     onClickListener = Overlay.OnClickListener { overlay ->
-                        val window = overlay as InfoWindow
-
                         val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
                         val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
                             setView(dlgView)
@@ -144,7 +138,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var markerListener = Overlay.OnClickListener { overlay ->
         val marker = overlay as Marker
         marker.infoWindow?.close() ?: run {
-            infoWindow.open(marker)
+            infoWindow.apply {
+                adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
+                    override fun getText(p0: InfoWindow): CharSequence {
+                        return marker.tag.toString()
+                    }
+                }
+                open(marker)
+            }
         }
 
         true
@@ -154,7 +155,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @UiThread
     override fun onMapReady(map: NaverMap) {
         CoroutineScope(Dispatchers.IO).launch {
-            // todo: Load images from room
             val entities = PmDatabase.getInstance(this@MainActivity).getPmDAO()
                 .selectPhoto()
             if(entities.isEmpty()) return@launch
@@ -173,6 +173,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationTrackingMode = LocationTrackingMode.NoFollow
                 setOnMapClickListener { _, _ ->
                     infoWindow.close()
+                }
+                uiSettings.apply {
+                    isCompassEnabled = true
+                    isScaleBarEnabled = true
+
+                    isTiltGesturesEnabled = false
+                    isRotateGesturesEnabled = false
                 }
             }
         }
@@ -203,10 +210,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 mapFragment.getMapAsync(this@MainActivity)
             }
         }
-    }
-
-    private suspend fun setMarkers() {
-
     }
 
 //    @RequiresApi(Build.VERSION_CODES.Q)
@@ -261,10 +264,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         Log.e("before address is ${addressList[0].getAddressLine(0).toString()}")
 
         val address = addressList[0].getAddressLine(0).split(" ")
-//        if(address.split(" 대한민국")[0].isNotEmpty()) {
-//            address.toMutableList().reverse()
-//            return address
-//        }
         if(address[address.lastIndex] == "대한민국") {
             val builder = StringBuilder()
             for(i in address.lastIndex -1 downTo 0) {

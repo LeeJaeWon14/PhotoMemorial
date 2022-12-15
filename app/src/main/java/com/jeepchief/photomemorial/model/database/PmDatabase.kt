@@ -10,7 +10,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeepchief.photomemorial.util.Converters
 
 @Database(entities = [PhotoEntity::class], version = 1, exportSchema = false)
-//@TypeConverters(Converters::class)
 @TypeConverters(Converters::class)
 abstract class PmDatabase : RoomDatabase() {
     // todo: Will be implement dao.
