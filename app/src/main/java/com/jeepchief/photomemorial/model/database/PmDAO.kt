@@ -1,5 +1,6 @@
 package com.jeepchief.photomemorial.model.database
 
+import android.net.Uri
 import androidx.room.*
 
 @Dao
@@ -15,4 +16,7 @@ interface PmDAO {
 
     @Delete
     fun deletePhoto(entity: PhotoEntity)
+
+    @Query("SELECT photo FROM PhotoEntity WHERE address = :address")
+    fun getPhotoUri(address: String) : Uri
 }

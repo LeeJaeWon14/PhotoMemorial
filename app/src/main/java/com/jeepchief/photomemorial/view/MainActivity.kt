@@ -4,11 +4,15 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
 import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -16,6 +20,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.exifinterface.media.ExifInterface
@@ -126,27 +131,29 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             tag = address
         }
 
-        infoWindow = InfoWindow().apply {
-            onClickListener = Overlay.OnClickListener { overlay ->
-                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
-                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
-                    setView(dlgView)
-                    setCancelable(false)
-                }
+        infoWindow = InfoWindow()
 
-                dlgView.run {
-                    findViewById<ImageView>(R.id.iv_infowindow).run {
-                        setImageURI(uri)
-                        setOnClickListener { _->
-                            dlg.dismiss()
-                        }
-                    }
-                }
-
-                dlg.show()
-                true
-            }
-        }
+//        infoWindow = InfoWindow().apply {
+//            onClickListener = Overlay.OnClickListener { overlay ->
+//                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
+//                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
+//                    setView(dlgView)
+//                    setCancelable(false)
+//                }
+//
+//                dlgView.run {
+//                    findViewById<ImageView>(R.id.iv_infowindow).run {
+//                        setImageURI(uri)
+//                        setOnClickListener { _->
+//                            dlg.dismiss()
+//                        }
+//                    }
+//                }
+//
+//                dlg.show()
+//                true
+//            }
+//        }
     }
 
     private var markerListener = Overlay.OnClickListener { overlay ->
@@ -158,6 +165,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         return marker.tag.toString()
                     }
                 }
+                onClickListener = Overlay.OnClickListener { _->
+                    viewModel.getPhotoUri(this@MainActivity, marker.tag.toString())
+
+                    true
+                }
                 open(marker)
             }
         }
@@ -168,9 +180,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     @UiThread
     override fun onMapReady(map: NaverMap) {
-        CoroutineScope(Dispatchers.IO).launch {
-
-        }
         viewModel.getPhotoEntity(this@MainActivity)
         CoroutineScope(Dispatchers.Main).launch {
             // For map setting.
@@ -214,6 +223,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         viewModel.location.value = it
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun observeViewModel() {
         viewModel.run {
             location.observe(this@MainActivity) {
@@ -226,10 +236,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     makeOverlay(entity)
                 }
             }
+
+            photoUri.observe(this@MainActivity) { uri ->
+                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
+                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
+                    setView(dlgView)
+                    setCancelable(false)
+                }
+
+                dlgView.run {
+                    findViewById<ImageView>(R.id.iv_infowindow).run {
+//                        val mUri = MediaStore.getMediaUri(this@MainActivity, uri)
+//                        val inStream = contentResolver.openInputStream(uri)
+//                        val bitmap = BitmapFactory.decodeStream(inStream)
+                        setImageURI(uri)
+//                        setImageBitmap(rotateImage(bitmap))
+                        setOnClickListener { _->
+                            dlg.dismiss()
+                        }
+                    }
+                }
+
+                dlg.show()
+            }
         }
     }
 
-//    @RequiresApi(Build.VERSION_CODES.Q)
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun checkPermission() {
         val permissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
@@ -247,7 +280,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             setPermissions(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_MEDIA_LOCATION
+                Manifest.permission.ACCESS_MEDIA_LOCATION,
+                Manifest.permission.READ_EXTERNAL_STORAGE
             )
         }.check()
     }
@@ -287,5 +321,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             return builder.toString()
         }
         return addressList[0].getAddressLine(0).toString().split("대한민국 ")[1]
+    }
+
+    private fun rotateImage(bitmap: Bitmap, degree: Float = 90.0f) : Bitmap {
+        val matrix = Matrix()
+        matrix.postRotate(degree)
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }

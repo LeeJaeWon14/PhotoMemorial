@@ -2,6 +2,7 @@ package com.jeepchief.photomemorial.viewmodel
 
 import android.content.Context
 import android.location.Location
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -26,6 +27,18 @@ class MainViewModel : ViewModel() {
             withContext(Dispatchers.IO) {
                 _photoEntity.postValue(
                     PmDatabase.getInstance(context).getPmDAO().selectPhoto()
+                )
+            }
+        }
+    }
+
+    private val _photoUri: MutableLiveData<Uri> by lazy { MutableLiveData<Uri>() }
+    val photoUri: LiveData<Uri> get() = _photoUri
+    fun getPhotoUri(context: Context, address: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                _photoUri.postValue(
+                    PmDatabase.getInstance(context).getPmDAO().getPhotoUri(address)
                 )
             }
         }
