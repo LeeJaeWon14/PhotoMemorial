@@ -4,16 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Matrix
 import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.ImageView
@@ -23,6 +19,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
 import com.gun0912.tedpermission.PermissionListener
@@ -34,12 +31,7 @@ import com.jeepchief.photomemorial.model.database.PmDatabase
 import com.jeepchief.photomemorial.util.Log
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.CameraPosition
-import com.naver.maps.map.LocationTrackingMode
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.NaverMapSdk
-import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.*
 import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
@@ -84,7 +76,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         result?.let {
             it.forEach { uri ->
                 if(uri.toString().contains("com.android.providers.media")) {
-                    Log.e("This uri is not picking from gallery, Maybe pick from providers..")
+                    Log.e(getString(R.string.msg_image_not_from_the_gallery))
                     return@forEach
                 }
                 makeOverlay(uri)
@@ -133,28 +125,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         infoWindow = InfoWindow()
-
-//        infoWindow = InfoWindow().apply {
-//            onClickListener = Overlay.OnClickListener { overlay ->
-//                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
-//                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
-//                    setView(dlgView)
-//                    setCancelable(false)
-//                }
-//
-//                dlgView.run {
-//                    findViewById<ImageView>(R.id.iv_infowindow).run {
-//                        setImageURI(uri)
-//                        setOnClickListener { _->
-//                            dlg.dismiss()
-//                        }
-//                    }
-//                }
-//
-//                dlg.show()
-//                true
-//            }
-//        }
     }
 
     private var markerListener = Overlay.OnClickListener { overlay ->
@@ -198,7 +168,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 uiSettings.apply {
                     isCompassEnabled = true
                     isScaleBarEnabled = true
-
                     isTiltGesturesEnabled = false
                     isRotateGesturesEnabled = false
                 }
@@ -248,17 +217,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 dlgView.run {
                     findViewById<ImageView>(R.id.iv_infowindow).run {
-//                        val mUri = MediaStore.getMediaUri(this@MainActivity, uri)
-//                        val inStream = contentResolver.openInputStream(uri)
-//                        val bitmap = BitmapFactory.decodeStream(inStream)
                         setImageURI(uri)
-//                        setImageBitmap(rotateImage(bitmap))
                         setOnClickListener { _->
                             dlg.dismiss()
                         }
                     }
                 }
-
                 dlg.show()
             }
         }
@@ -288,18 +252,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }.check()
     }
 
-    //Uri를 절대경로(Absolute Path)로 변환
-    private fun getAbsolutePath(uri : Uri) : String {
-        val proj = arrayOf(MediaStore.Images.Media.DATA)
-        val c : Cursor = contentResolver.query(uri, proj, null, null)!!
-        val index = c.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
-        c.moveToFirst()
-
-        val result = c.getString(index)
-
-        return result
-    }
-
     @SuppressLint("Range")
     private fun getAbsolutePath(context: Context, uri: Uri) : String? {
         val proj = arrayOf(MediaStore.Images.Media.DATA)
@@ -323,12 +275,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             return builder.toString()
         }
         return addressList[0].getAddressLine(0).toString().split("대한민국 ")[1]
-    }
-
-    private fun rotateImage(bitmap: Bitmap, degree: Float = 90.0f) : Bitmap {
-        val matrix = Matrix()
-        matrix.postRotate(degree)
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun hideUi() {
