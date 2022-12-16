@@ -38,7 +38,6 @@ import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import kotlinx.coroutines.*
-import okhttp3.Dispatcher
 import java.io.File
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -82,63 +81,71 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.e("This uri is not picking from gallery, Maybe pick from providers..")
                     return@forEach
                 }
-                CoroutineScope(Dispatchers.IO).launch {
-                    PmDatabase.getInstance(this@MainActivity).getPmDAO()
-                        .insertPhoto(PhotoEntity(
-                            uri, null, null, null
-                        ))
-                }
                 makeOverlay(uri)
             }
         }
     }
 
-    private fun makeOverlay(uri: Uri, isFirst: Boolean = false) {
+    private fun makeOverlay(uri: Uri) {
         getAbsolutePath(this@MainActivity, uri)?.let { path ->
             val exif = ExifInterface(path)
             exif.latLong?.let {
                 val address = getAddress(it[0], it[1])
-                val marker = Marker()
-                marker.apply {
-                    position = LatLng(it[0], it[1])
-                    isVisible = true
-                    map = naverMap
-                    onClickListener = markerListener
-                    iconTintColor = Color.RED
-                    tag = address
+                // Save with room
+                CoroutineScope(Dispatchers.IO).launch {
+                    PmDatabase.getInstance(this@MainActivity).getPmDAO()
+                        .insertPhoto(PhotoEntity(
+                            uri, it[0], it[1], address
+                        ))
                 }
+                initOverlay(uri, it[0], it[1], address)
 
-                infoWindow = InfoWindow().apply {
-                    onClickListener = Overlay.OnClickListener { overlay ->
-                        val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
-                        val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
-                            setView(dlgView)
-                            setCancelable(false)
-                        }
-
-                        dlgView.run {
-                            findViewById<ImageView>(R.id.iv_infowindow).run {
-                                setImageURI(uri)
-                                setOnClickListener { _->
-                                    dlg.dismiss()
-                                }
-                            }
-//                                    findViewById<Button>(R.id.btn_close_dialog).setOnClickListener { _->
-//                                        dlg.dismiss()
-//                                    }
-                        }
-
-                        dlg.show()
-                        true
-                    }
-                }
             } ?: run {
-                if(!isFirst)
-                    Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
             }
         } ?: run {
             Toast.makeText(this@MainActivity, getString(R.string.msg_illegal_uri), Toast.LENGTH_SHORT).show()
             Log.e("This uri illegal type.. $uri")
+        }
+    }
+
+    private fun makeOverlay(entity: PhotoEntity) {
+        entity.run {
+            initOverlay(photo, latitude, longitude, address)
+        }
+    }
+
+    private fun initOverlay(uri: Uri, lat: Double, lon: Double, address: String) {
+        val marker = Marker()
+        marker.apply {
+            position = LatLng(lat, lon)
+            isVisible = true
+            map = naverMap
+            onClickListener = markerListener
+            iconTintColor = Color.RED
+            tag = address
+        }
+
+        infoWindow = InfoWindow().apply {
+            onClickListener = Overlay.OnClickListener { overlay ->
+                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
+                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
+                    setView(dlgView)
+                    setCancelable(false)
+                }
+
+                dlgView.run {
+                    findViewById<ImageView>(R.id.iv_infowindow).run {
+                        setImageURI(uri)
+                        setOnClickListener { _->
+                            dlg.dismiss()
+                        }
+                    }
+                }
+
+                dlg.show()
+                true
+            }
         }
     }
 
@@ -162,18 +169,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     @UiThread
     override fun onMapReady(map: NaverMap) {
         CoroutineScope(Dispatchers.IO).launch {
-            val entities = PmDatabase.getInstance(this@MainActivity).getPmDAO()
-                .selectPhoto()
-            if(entities.isEmpty()) return@launch
-            entities.forEach { entity ->
-//                Log.e("uri is ${entity.photo.toString()} on entity")
-//                if(entity.photo.toString().contains("com.android.providers.media")) {
-//                    Log.e("This uri is not picking from gallery, Maybe pick from providers..")
-//                    return@forEach
-//                }
-                withContext(Dispatchers.Main) { makeOverlay(entity.photo, true) }
-            }
+
         }
+        viewModel.getPhotoEntity(this@MainActivity)
         CoroutineScope(Dispatchers.Main).launch {
             // For map setting.
             this@MainActivity.naverMap = map.apply {
@@ -220,6 +218,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         viewModel.run {
             location.observe(this@MainActivity) {
                 mapFragment.getMapAsync(this@MainActivity)
+            }
+
+            photoEntity.observe(this@MainActivity) { entities ->
+                if(entities.isEmpty()) return@observe
+                entities.forEach { entity ->
+                    makeOverlay(entity)
+                }
             }
         }
     }
