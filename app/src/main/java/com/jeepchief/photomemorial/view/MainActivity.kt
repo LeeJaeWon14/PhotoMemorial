@@ -23,6 +23,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
@@ -192,6 +193,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationTrackingMode = LocationTrackingMode.NoFollow
                 setOnMapClickListener { _, _ ->
                     infoWindow.close()
+                    hideUi()
                 }
                 uiSettings.apply {
                     isCompassEnabled = true
@@ -327,5 +329,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val matrix = Matrix()
         matrix.postRotate(degree)
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
+
+    private fun hideUi() {
+        binding.btnAddPhoto.run {
+            isVisible = !isVisible
+        }
+        if(supportActionBar?.isShowing == true) supportActionBar?.hide() else supportActionBar?.show()
     }
 }
