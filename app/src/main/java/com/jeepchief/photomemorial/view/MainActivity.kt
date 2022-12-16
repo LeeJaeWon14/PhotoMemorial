@@ -78,6 +78,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val imagePickLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { result ->
         result?.let {
             it.forEach { uri ->
+                if(uri.toString().contains("com.android.providers.media")) {
+                    Log.e("This uri is not picking from gallery, Maybe pick from providers..")
+                    return@forEach
+                }
                 CoroutineScope(Dispatchers.IO).launch {
                     PmDatabase.getInstance(this@MainActivity).getPmDAO()
                         .insertPhoto(PhotoEntity(
@@ -89,12 +93,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun makeOverlay(uri: Uri) {
+    private fun makeOverlay(uri: Uri, isFirst: Boolean = false) {
         getAbsolutePath(this@MainActivity, uri)?.let { path ->
             val exif = ExifInterface(path)
             exif.latLong?.let {
                 val address = getAddress(it[0], it[1])
-                Log.e("after address is $address")
                 val marker = Marker()
                 marker.apply {
                     position = LatLng(it[0], it[1])
@@ -130,8 +133,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             } ?: run {
-                Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
+                if(!isFirst)
+                    Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
             }
+        } ?: run {
+            Toast.makeText(this@MainActivity, getString(R.string.msg_illegal_uri), Toast.LENGTH_SHORT).show()
+            Log.e("This uri illegal type.. $uri")
         }
     }
 
@@ -159,7 +166,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 .selectPhoto()
             if(entities.isEmpty()) return@launch
             entities.forEach { entity ->
-                withContext(Dispatchers.Main) { makeOverlay(entity.photo) }
+//                Log.e("uri is ${entity.photo.toString()} on entity")
+//                if(entity.photo.toString().contains("com.android.providers.media")) {
+//                    Log.e("This uri is not picking from gallery, Maybe pick from providers..")
+//                    return@forEach
+//                }
+                withContext(Dispatchers.Main) { makeOverlay(entity.photo, true) }
             }
         }
         CoroutineScope(Dispatchers.Main).launch {
@@ -261,8 +273,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun getAddress(lat: Double, lon: Double) : String {
         val geo = Geocoder(this)
         val addressList = geo.getFromLocation(lat, lon, 10)
-        Log.e("before address is ${addressList[0].getAddressLine(0).toString()}")
-
         val address = addressList[0].getAddressLine(0).split(" ")
         if(address[address.lastIndex] == "대한민국") {
             val builder = StringBuilder()
