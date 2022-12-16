@@ -13,11 +13,11 @@ data class PhotoEntity(
     var photo: Uri,
 
     @ColumnInfo(name = "latitude")
-    var latitude: Double?,
+    var latitude: Double,
 
     @ColumnInfo(name = "longitude")
-    var longitude: Double?,
+    var longitude: Double,
 
     @ColumnInfo(name = "address")
-    var address: String?
+    var address: String
 )
