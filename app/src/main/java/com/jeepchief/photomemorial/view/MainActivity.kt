@@ -9,14 +9,12 @@ import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -194,7 +192,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         viewModel.location.value = it
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     private fun observeViewModel() {
         viewModel.run {
             location.observe(this@MainActivity) {
@@ -228,7 +225,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     private fun checkPermission() {
         val permissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
