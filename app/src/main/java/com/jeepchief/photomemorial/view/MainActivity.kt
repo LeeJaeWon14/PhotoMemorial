@@ -86,7 +86,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         getAbsolutePath(this@MainActivity, uri)?.let { path ->
             val exif = ExifInterface(path)
             exif.latLong?.let {
-                val address = getAddress(it[0], it[1])
+                val address: String
+                try {
+                    address = getAddress(it[0], it[1])
+                } catch(e: IllegalStateException) {
+                    return
+                }
                 // Save with room
                 CoroutineScope(Dispatchers.IO).launch {
                     PmDatabase.getInstance(this@MainActivity).getPmDAO()
@@ -263,6 +268,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val geo = Geocoder(this)
         val addressList = geo.getFromLocation(lat, lon, 10)
         val address = addressList[0].getAddressLine(0).split(" ")
+        if(!address.contains("대한민국")) {
+            Toast.makeText(this@MainActivity, getString(R.string.msg_not_available_foreign_country), Toast.LENGTH_SHORT).show()
+            throw IllegalStateException()
+        }
         if(address[address.lastIndex] == "대한민국") {
             val builder = StringBuilder()
             for(i in address.lastIndex -1 downTo 0) {

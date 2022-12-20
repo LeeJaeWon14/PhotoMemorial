@@ -5,4 +5,5 @@
     <string name="msg_uri_is_null">사진에서 장소 정보를 가져올 수 없어요.</string>
     <string name="msg_illegal_uri">올바르지 않은 형식입니다.</string>
     <string name="msg_image_not_from_the_gallery">This uri is not picking from gallery, Maybe pick from providers..</string>
+    <string name="msg_not_available_foreign_country">국내에서 찍은 사진만 가능해요.</string>
 </resources>
