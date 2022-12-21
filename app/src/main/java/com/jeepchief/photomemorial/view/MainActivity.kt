@@ -64,8 +64,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // init UI
         binding.apply {
+            setSupportActionBar(tbSearchBar)
+            supportActionBar?.setDisplayShowTitleEnabled(false)
+
             btnAddPhoto.setOnClickListener {
                 imagePickLauncher.launch("image/*")
+            }
+
+            btnAddPhoto.setOnLongClickListener { _ ->
+                true
             }
         }
     }
@@ -166,6 +173,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 locationTrackingMode = LocationTrackingMode.NoFollow
                 setOnMapClickListener { _, _ ->
                     infoWindow.close()
+//                    getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
                     hideUi()
                 }
                 uiSettings.apply {
