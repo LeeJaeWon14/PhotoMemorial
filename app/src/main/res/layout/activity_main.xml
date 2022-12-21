@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".view.MainActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -11,11 +12,11 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:layout_alignParentTop="true">
-        <TextView
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/sv_search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textAlignment="center" />
+            app:queryHint="검색 .." />
     </androidx.appcompat.widget.Toolbar>
 
     <fragment
@@ -25,6 +26,13 @@
         android:layout_centerInParent="true"
         android:layout_below="@+id/tb_search_bar"
         android:name="com.naver.maps.map.MapFragment"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_search_result"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/tb_search_bar"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btn_add_photo"

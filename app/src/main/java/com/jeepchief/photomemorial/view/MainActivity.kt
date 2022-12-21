@@ -71,8 +71,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 imagePickLauncher.launch("image/*")
             }
 
-            btnAddPhoto.setOnLongClickListener { _ ->
-                true
+            svSearch.run {
+                setOnClickListener {
+                    //todo: replace fragment
+                    Toast.makeText(this@MainActivity, "Replace fragment here", Toast.LENGTH_SHORT).show()
+                    rvSearchResult.isVisible = true
+                }
+                setOnCloseListener {
+                    //todo: restore prev fragment
+                    Toast.makeText(this@MainActivity, "Restore fragment here", Toast.LENGTH_SHORT).show()
+                    rvSearchResult.isVisible = false
+                    false
+                }
             }
         }
     }
