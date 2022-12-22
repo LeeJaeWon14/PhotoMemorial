@@ -49,9 +49,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        locationManager = getSystemService(LocationManager::class.java)
+
         observeViewModel()
         checkPermission()
-        locationManager = getSystemService(LocationManager::class.java)
 
         // init naver maps
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient("kd3ptmxe5c")
@@ -197,6 +198,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun initLocation() {
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Toast.makeText(this@MainActivity, getString(R.string.msg_off_gps), Toast.LENGTH_SHORT).show()
+            return
+        }
         try {
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
