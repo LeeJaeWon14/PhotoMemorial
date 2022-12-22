@@ -172,29 +172,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     @UiThread
     override fun onMapReady(map: NaverMap) {
-        viewModel.getPhotoEntity(this@MainActivity)
-        CoroutineScope(Dispatchers.Main).launch {
-            // For map setting.
-            this@MainActivity.naverMap = map.apply {
-                cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
-                locationOverlay.apply {
-                    isVisible = true
-                    position = LatLng(viewModel.location.value!!)
-                }
-                locationTrackingMode = LocationTrackingMode.NoFollow
-                setOnMapClickListener { _, _ ->
-                    infoWindow.close()
-//                    getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
-                    hideUi()
-                }
-                uiSettings.apply {
-                    isCompassEnabled = true
-                    isScaleBarEnabled = true
-                    isTiltGesturesEnabled = false
-                    isRotateGesturesEnabled = false
-                }
+        // For map setting.
+        this@MainActivity.naverMap = map.apply {
+//            cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
+//            locationOverlay.apply {
+//                isVisible = true
+//                position = LatLng(viewModel.location.value!!)
+//            }
+            locationTrackingMode = LocationTrackingMode.NoFollow
+            setOnMapClickListener { _, _ ->
+                infoWindow.close()
+                hideUi()
+            }
+            uiSettings.apply {
+                isCompassEnabled = true
+                isScaleBarEnabled = true
+                isTiltGesturesEnabled = false
+                isRotateGesturesEnabled = false
             }
         }
+
+        initLocation()
+        viewModel.getPhotoEntity(this@MainActivity)
     }
 
     private fun initLocation() {
@@ -223,7 +222,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun observeViewModel() {
         viewModel.run {
             location.observe(this@MainActivity) {
-                mapFragment.getMapAsync(this@MainActivity)
+                naverMap.apply {
+                    cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
+                    locationOverlay.apply {
+                        isVisible = true
+                        position = LatLng(it)
+                    }
+                }
             }
 
             photoEntity.observe(this@MainActivity) { entities ->
@@ -256,7 +261,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun checkPermission() {
         val permissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
-                initLocation()
+                mapFragment.getMapAsync(this@MainActivity)
             }
 
             override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
