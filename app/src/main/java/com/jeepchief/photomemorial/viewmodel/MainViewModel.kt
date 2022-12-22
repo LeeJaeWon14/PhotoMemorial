@@ -9,15 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jeepchief.photomemorial.model.database.PhotoEntity
 import com.jeepchief.photomemorial.model.database.PmDatabase
-import com.jeepchief.photomemorial.model.rest.MapService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Dispatcher
 
 class MainViewModel : ViewModel() {
-//    private val mapService: MapService
-
     val location: MutableLiveData<Location> by lazy { MutableLiveData<Location>() }
 
     private val _photoEntity: MutableLiveData<List<PhotoEntity>> by lazy { MutableLiveData<List<PhotoEntity>>() }
@@ -39,6 +35,18 @@ class MainViewModel : ViewModel() {
             withContext(Dispatchers.IO) {
                 _photoUri.postValue(
                     PmDatabase.getInstance(context).getPmDAO().getPhotoUri(address)
+                )
+            }
+        }
+    }
+
+    private val _deleteUriResult: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
+    val deleteUriResult: LiveData<Int> get() = _deleteUriResult
+    fun deleteUri(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                _deleteUriResult.postValue(
+                    PmDatabase.getInstance(context).getPmDAO().deleteRowByUri(uri)
                 )
             }
         }

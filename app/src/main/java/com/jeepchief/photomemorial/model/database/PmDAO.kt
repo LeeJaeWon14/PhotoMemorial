@@ -19,4 +19,7 @@ interface PmDAO {
 
     @Query("SELECT photo FROM PhotoEntity WHERE address = :address")
     fun getPhotoUri(address: String) : Uri
+
+    @Query("DELETE FROM PhotoEntity WHERE photo = :uri")
+    fun deleteRowByUri(uri: Uri) : Int
 }

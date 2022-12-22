@@ -31,8 +31,15 @@
         android:id="@+id/rv_search_result"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/tb_search_bar"
-        android:visibility="gone" />
+        android:layout_below="@+id/tb_search_bar"  />
+
+<!--    <Button-->
+<!--        android:id="@+id/tv_test"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:text="TEST"-->
+<!--        android:layout_below="@id/tb_search_bar"-->
+<!--        android:textStyle="bold" />-->
 
     <Button
         android:id="@+id/btn_add_photo"

@@ -11,7 +11,6 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -20,10 +19,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.databinding.ActivityMainBinding
+import com.jeepchief.photomemorial.databinding.LayoutInfowindowPhotoBinding
 import com.jeepchief.photomemorial.model.database.PhotoEntity
 import com.jeepchief.photomemorial.model.database.PmDatabase
 import com.jeepchief.photomemorial.util.Log
@@ -35,6 +37,7 @@ import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import kotlinx.coroutines.*
 import java.io.File
+import java.io.IOException
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMainBinding
@@ -43,6 +46,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mapFragment: MapFragment
     private lateinit var naverMap: NaverMap
     private lateinit var infoWindow: InfoWindow
+    private val markerList = mutableListOf<MutableMap<String, Marker>>()
+    private val markerMap = mutableMapOf<String, Marker>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +70,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // init UI
         binding.apply {
+            rvSearchResult.apply {
+                isVisible = false
+                val manager = LinearLayoutManager(this@MainActivity)
+                layoutManager = manager
+                adapter
+                addItemDecoration(DividerItemDecoration(
+                    this@MainActivity, manager.orientation
+                ))
+            }
             setSupportActionBar(tbSearchBar)
             supportActionBar?.setDisplayShowTitleEnabled(false)
 
@@ -77,11 +91,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     //todo: replace fragment
                     Toast.makeText(this@MainActivity, "Replace fragment here", Toast.LENGTH_SHORT).show()
                     rvSearchResult.isVisible = true
+//                    tvTest.isVisible = true
                 }
                 setOnCloseListener {
                     //todo: restore prev fragment
                     Toast.makeText(this@MainActivity, "Restore fragment here", Toast.LENGTH_SHORT).show()
                     rvSearchResult.isVisible = false
+//                    tvTest.isVisible = false
                     false
                 }
             }
@@ -144,6 +160,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             iconTintColor = Color.RED
             tag = address
         }
+        markerMap.put(uri.toString(), marker)
+        markerList.add(markerMap)
 
         infoWindow = InfoWindow()
     }
@@ -174,11 +192,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(map: NaverMap) {
         // For map setting.
         this@MainActivity.naverMap = map.apply {
-//            cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
-//            locationOverlay.apply {
-//                isVisible = true
-//                position = LatLng(viewModel.location.value!!)
-//            }
             locationTrackingMode = LocationTrackingMode.NoFollow
             setOnMapClickListener { _, _ ->
                 infoWindow.close()
@@ -239,21 +252,51 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             photoUri.observe(this@MainActivity) { uri ->
-                val dlgView = layoutInflater.inflate(R.layout.layout_infowindow_photo, null, false)
+                // check exist with photo
+                val isExist = try {
+                    this@MainActivity.contentResolver.openInputStream(uri)?.use {
+
+                    }
+                    true
+                }
+                catch (e: IOException) {
+                    false
+                }
+
+                if(!isExist) {
+                    Log.e("Not found photo")
+                    markerList.forEach { map ->
+                        map[uri.toString()]?.map = null
+                    }
+                    viewModel.deleteUri(this@MainActivity, uri)
+                    return@observe
+                }
+
+                val dlgView = LayoutInfowindowPhotoBinding.inflate(layoutInflater)
                 val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
-                    setView(dlgView)
+                    setView(dlgView.root)
                     setCancelable(false)
                 }
 
-                dlgView.run {
-                    findViewById<ImageView>(R.id.iv_infowindow).run {
-                        setImageURI(uri)
-                        setOnClickListener { _->
-                            dlg.dismiss()
-                        }
+                dlgView.apply {
+                    ivInfowindow.setImageURI(uri)
+                    btnCloseDialog.setOnClickListener {
+                        dlg.dismiss()
                     }
                 }
                 dlg.show()
+            }
+
+            deleteUriResult.observe(this@MainActivity) { rowCnt ->
+                when(rowCnt) {
+                    1 -> {
+//                        mapFragment.getMapAsync(this@MainActivity)
+                        Toast.makeText(this@MainActivity, getString(R.string.msg_deleted_photo), Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                        Log.e("Uri delete fail..")
+                    }
+                }
             }
         }
     }
