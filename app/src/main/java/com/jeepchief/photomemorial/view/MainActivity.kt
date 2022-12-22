@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
+import android.database.sqlite.SQLiteConstraintException
 import android.graphics.Color
 import android.location.Geocoder
 import android.location.LocationListener
@@ -107,8 +108,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val imagePickLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { result ->
         result?.let {
             it.forEach { uri ->
-                if(uri.toString().contains("com.android.providers.media")) {
+                if(!uri.toString().contains(getString(R.string.standard_uri))) {
                     Log.e(getString(R.string.msg_image_not_from_the_gallery))
+                    Toast.makeText(this@MainActivity, getString(R.string.msg_only_allowed_from_gallery), Toast.LENGTH_SHORT).show()
                     return@forEach
                 }
                 makeOverlay(uri)
@@ -128,12 +130,24 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
                 // Save with room
                 CoroutineScope(Dispatchers.IO).launch {
-                    PmDatabase.getInstance(this@MainActivity).getPmDAO()
-                        .insertPhoto(PhotoEntity(
-                            uri, it[0], it[1], address
-                        ))
+                    try {
+                        PmDatabase.getInstance(this@MainActivity).getPmDAO()
+                            .insertPhoto(PhotoEntity(
+                                uri, it[0], it[1], address
+                            ))
+                        withContext(Dispatchers.Main) {
+                            initOverlay(uri, it[0], it[1], address)
+                            naverMap.cameraPosition = CameraPosition(LatLng(it[0], it[1]), 15.0)
+                            markerList.forEach { map ->
+                                map[uri.toString()]?.performClick()
+                            }
+                        }
+                    } catch(e: SQLiteConstraintException) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, getString(R.string.msg_not_allowed_duplication), Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
-                initOverlay(uri, it[0], it[1], address)
 
             } ?: run {
                 Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
@@ -175,9 +189,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         return marker.tag.toString()
                     }
                 }
-                onClickListener = Overlay.OnClickListener { _->
+                onClickListener = Overlay.OnClickListener { window ->
                     viewModel.getPhotoUri(this@MainActivity, marker.tag.toString())
-
+                    (window as InfoWindow).close()
                     true
                 }
                 open(marker)
@@ -236,7 +250,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         viewModel.run {
             location.observe(this@MainActivity) {
                 naverMap.apply {
-                    cameraPosition = CameraPosition(LatLng(viewModel.location.value!!), 15.0)
+                    cameraPosition = CameraPosition(LatLng(it), 15.0)
                     locationOverlay.apply {
                         isVisible = true
                         position = LatLng(it)
@@ -265,10 +279,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if(!isExist) {
                     Log.e("Not found photo")
-                    markerList.forEach { map ->
-                        map[uri.toString()]?.map = null
-                    }
-                    viewModel.deleteUri(this@MainActivity, uri)
+                    Toast.makeText(this@MainActivity, getString(R.string.msg_deleted_photo), Toast.LENGTH_SHORT).show()
+                    removeImage(uri)
                     return@observe
                 }
 
@@ -283,6 +295,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     btnCloseDialog.setOnClickListener {
                         dlg.dismiss()
                     }
+                    btnRemoveImage.setOnClickListener {
+                        removeImage(uri)
+                        dlg.dismiss()
+                    }
                 }
                 dlg.show()
             }
@@ -291,7 +307,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 when(rowCnt) {
                     1 -> {
 //                        mapFragment.getMapAsync(this@MainActivity)
-                        Toast.makeText(this@MainActivity, getString(R.string.msg_deleted_photo), Toast.LENGTH_SHORT).show()
                     }
                     else -> {
                         Log.e("Uri delete fail..")
@@ -358,5 +373,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             isVisible = !isVisible
         }
         if(supportActionBar?.isShowing == true) supportActionBar?.hide() else supportActionBar?.show()
+    }
+
+    //todo: Will adding share feature
+
+    private fun removeImage(uri: Uri) {
+        markerList.forEach { map ->
+            map[uri.toString()]?.map = null
+        }
+        viewModel.deleteUri(this@MainActivity, uri)
     }
 }

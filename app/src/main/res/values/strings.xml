@@ -8,6 +8,10 @@
     <string name="msg_not_available_foreign_country">국내에서 찍은 사진만 가능해요.</string>
     <string name="msg_off_gps">GPS를 활성화 한 후 다시 시도해주세요.</string>
     <string name="msg_deleted_photo">갤러리에서 삭제된 사진입니다, 마커를 삭제합니다.</string>
+    <string name="msg_not_allowed_duplication">이미 저장되어 있는 사진입니다.</string>
+    <string name="msg_only_allowed_from_gallery">갤러리에서 사진을 선택해주세요.</string>
 
     <string name="str_menu_search">검색</string>
+    
+    <string name="standard_uri">media/external/images/media/</string>
 </resources>
