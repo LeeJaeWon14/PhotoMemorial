@@ -6,6 +6,9 @@ pluginManagement {
         maven {
             url 'https://naver.jfrog.io/artifactory/maven/'
         }
+        maven {
+            url 'https://www.jitpack.io'
+        }
     }
 }
 dependencyResolutionManagement {
@@ -15,6 +18,9 @@ dependencyResolutionManagement {
         mavenCentral()
         maven {
             url 'https://naver.jfrog.io/artifactory/maven/'
+        }
+        maven {
+            url 'https://www.jitpack.io'
         }
     }
 }

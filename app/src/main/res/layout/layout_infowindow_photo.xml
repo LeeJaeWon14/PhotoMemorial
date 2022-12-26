@@ -2,14 +2,24 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools" >
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <ImageView
+    <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/iv_infowindow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:src = "@drawable/ic_launcher_foreground"
-        android:background="@android:color/transparent"/>
+        android:background="@android:color/transparent" />
+
+    <ImageView
+        android:id="@+id/iv_share_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?selectableItemBackground"
+        android:src = "@drawable/ic_baseline_share_24"
+        android:layout_alignTop="@id/iv_infowindow"
+        android:layout_alignEnd="@id/iv_infowindow"
+        android:layout_margin="10dp"/>
 
 
     <LinearLayout

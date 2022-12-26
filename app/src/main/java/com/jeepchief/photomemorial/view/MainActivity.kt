@@ -3,6 +3,7 @@ package com.jeepchief.photomemorial.view
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteConstraintException
 import android.graphics.Color
@@ -298,6 +299,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     btnRemoveImage.setOnClickListener {
                         removeImage(uri)
                         dlg.dismiss()
+                    }
+                    ivShareButton.setOnClickListener {
+//                        val shareIntent = Intent(Intent.ACTION_SEND)
+                        startActivity(Intent(
+                            Intent.ACTION_SEND
+                        ).apply {
+                            type = "image/*"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                        })
                     }
                 }
                 dlg.show()
