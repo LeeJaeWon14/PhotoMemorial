@@ -33,13 +33,13 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/tb_search_bar"  />
 
-<!--    <Button-->
-<!--        android:id="@+id/tv_test"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        android:text="TEST"-->
-<!--        android:layout_below="@id/tb_search_bar"-->
-<!--        android:textStyle="bold" />-->
+    <Button
+        android:id="@+id/btn_show_list"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignEnd="@+id/btn_add_photo"
+        android:layout_above="@+id/btn_add_photo"
+        android:drawableTop="@drawable/ic_baseline_manage_search_24"/>
 
     <Button
         android:id="@+id/btn_add_photo"

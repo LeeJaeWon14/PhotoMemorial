@@ -51,4 +51,18 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    private val _searchPhotoList: MutableLiveData<List<PhotoEntity>> by lazy { MutableLiveData<List<PhotoEntity>>() }
+    val searchPhotoList: LiveData<List<PhotoEntity>> get() = _searchPhotoList
+    fun searchPhoto(context: Context, query: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                _searchPhotoList.postValue(
+                    PmDatabase.getInstance(context).getPmDAO().searchAddress(query)
+                )
+            }
+        }
+    }
+
+    val photoLocationBySearch: MutableLiveData<PhotoEntity> by lazy { MutableLiveData<PhotoEntity>() }
 }

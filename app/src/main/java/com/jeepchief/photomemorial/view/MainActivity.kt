@@ -19,6 +19,7 @@ import androidx.activity.viewModels
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -28,9 +29,11 @@ import com.gun0912.tedpermission.normal.TedPermission
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.databinding.ActivityMainBinding
 import com.jeepchief.photomemorial.databinding.LayoutInfowindowPhotoBinding
+import com.jeepchief.photomemorial.databinding.LayoutPhotoListBinding
 import com.jeepchief.photomemorial.model.database.PhotoEntity
 import com.jeepchief.photomemorial.model.database.PmDatabase
 import com.jeepchief.photomemorial.util.Log
+import com.jeepchief.photomemorial.view.adapter.SearchListAdapter
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -50,6 +53,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var infoWindow: InfoWindow
     private val markerList = mutableListOf<MutableMap<String, Marker>>()
     private val markerMap = mutableMapOf<String, Marker>()
+    private lateinit var photoListDlgView: LayoutPhotoListBinding
+    private lateinit var photoListDialog: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,15 +98,49 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     //todo: replace fragment
                     Toast.makeText(this@MainActivity, "Replace fragment here", Toast.LENGTH_SHORT).show()
                     rvSearchResult.isVisible = true
-//                    tvTest.isVisible = true
                 }
                 setOnCloseListener {
                     //todo: restore prev fragment
                     Toast.makeText(this@MainActivity, "Restore fragment here", Toast.LENGTH_SHORT).show()
                     rvSearchResult.isVisible = false
-//                    tvTest.isVisible = false
                     false
                 }
+            }
+
+            btnShowList.setOnClickListener {
+                photoListDlgView = LayoutPhotoListBinding.inflate(layoutInflater)
+                photoListDialog = AlertDialog.Builder(this@MainActivity).create().apply {
+                    setCancelable(false)
+                    setView(photoListDlgView.root)
+                }
+
+                photoListDlgView.apply {
+                    svSearchPhoto.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                        override fun onQueryTextSubmit(query: String?): Boolean {
+                            query?.let {
+                                viewModel.searchPhoto(this@MainActivity, it)
+                            }
+                            return false
+                        }
+
+                        override fun onQueryTextChange(newText: String?): Boolean {
+                            return false
+                        }
+                    })
+
+                    photoListDlgView.rvSearchResultInList.apply {
+                        val manager = LinearLayoutManager(this@MainActivity)
+                        layoutManager = manager
+                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, viewModel, photoListDialog)
+                        addItemDecoration(DividerItemDecoration(
+                            this@MainActivity, manager.orientation
+                        ))
+                    }
+
+                    btnExitPhotoList.setOnClickListener { photoListDialog.dismiss() }
+                }
+
+                photoListDialog.show()
             }
         }
     }
@@ -323,6 +362,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                 }
             }
+
+            searchPhotoList.observe(this@MainActivity) { list ->
+                photoListDlgView.rvSearchResultInList.apply {
+                    val manager = LinearLayoutManager(this@MainActivity)
+                    layoutManager = manager
+                    adapter = SearchListAdapter(list, viewModel, photoListDialog)
+                    addItemDecoration(DividerItemDecoration(
+                        this@MainActivity, manager.orientation
+                    ))
+                }
+            }
+
+            photoLocationBySearch.observe(this@MainActivity) { entity ->
+                entity.run {
+                    naverMap.cameraPosition = CameraPosition(LatLng(latitude, longitude), 15.0)
+                }
+            }
         }
     }
 
@@ -379,13 +435,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun hideUi() {
-        binding.btnAddPhoto.run {
-            isVisible = !isVisible
+        binding.apply {
+            btnAddPhoto.run {
+                isVisible = !isVisible
+            }
+            btnShowList.run {
+                isVisible = !isVisible
+            }
         }
         if(supportActionBar?.isShowing == true) supportActionBar?.hide() else supportActionBar?.show()
     }
-
-    //todo: Will adding share feature
 
     private fun removeImage(uri: Uri) {
         markerList.forEach { map ->

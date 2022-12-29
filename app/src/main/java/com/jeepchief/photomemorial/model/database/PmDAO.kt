@@ -22,4 +22,7 @@ interface PmDAO {
 
     @Query("DELETE FROM PhotoEntity WHERE photo = :uri")
     fun deleteRowByUri(uri: Uri) : Int
+
+    @Query("SELECT * FROM PhotoEntity WHERE address LIKE '%'||:query||'%'")
+    fun searchAddress(query: String) : List<PhotoEntity>
 }

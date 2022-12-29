@@ -33,14 +33,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:text="삭제" />
+            android:text="@string/str_remove" />
         <Button
             android:id="@+id/btn_close_dialog"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:layout_marginStart="5dp"
-            android:text="닫기" />
+            android:text="@string/str_dialog_close" />
     </LinearLayout>
 
 </RelativeLayout>
