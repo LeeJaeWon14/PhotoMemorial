@@ -142,6 +142,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 photoListDialog.show()
             }
+
+            btnNowLocation.setOnClickListener {
+                naverMap.cameraPosition = CameraPosition(
+                    LatLng(viewModel.location.value!!), 15.0
+                )
+            }
         }
     }
 
@@ -440,6 +446,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 isVisible = !isVisible
             }
             btnShowList.run {
+                isVisible = !isVisible
+            }
+            btnNowLocation.run {
                 isVisible = !isVisible
             }
         }
