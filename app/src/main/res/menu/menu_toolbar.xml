@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/menu_search"
-        android:icon="@drawable/ic_launcher_foreground"
-        android:title="@string/str_menu_search"
-        app:showAsAction="ifRoom"
-        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+    <item android:id="@+id/menu_now_location"
+        android:icon="@drawable/ic_baseline_my_location_24"
+        android:title="@string/str_now_location"
+        android:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/menu_photo_list"
+        android:icon="@drawable/ic_baseline_manage_search_24"
+        android:title="@string/str_photo_list"
+        android:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
 </menu>

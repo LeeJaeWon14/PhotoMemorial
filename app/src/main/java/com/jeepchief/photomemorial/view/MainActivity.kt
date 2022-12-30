@@ -13,6 +13,8 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -81,79 +83,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initUi() {
         // init UI
         binding.apply {
-//            rvSearchResult.apply {
-//                isVisible = false
-//                val manager = LinearLayoutManager(this@MainActivity)
-//                layoutManager = manager
-//                adapter
-//                addItemDecoration(DividerItemDecoration(
-//                    this@MainActivity, manager.orientation
-//                ))
-//            }
             setSupportActionBar(tbSearchBar)
             supportActionBar?.setDisplayShowTitleEnabled(false)
 
             btnAddPhoto.setOnClickListener {
                 imagePickLauncher.launch("image/*")
-            }
-
-            svSearch.run {
-                setOnClickListener {
-                    //todo: replace fragment
-                    Toast.makeText(this@MainActivity, "Replace fragment here", Toast.LENGTH_SHORT).show()
-                    rvSearchResult.isVisible = true
-                }
-                setOnCloseListener {
-                    //todo: restore prev fragment
-                    Toast.makeText(this@MainActivity, "Restore fragment here", Toast.LENGTH_SHORT).show()
-                    rvSearchResult.isVisible = false
-                    false
-                }
-            }
-
-            btnShowList.setOnClickListener {
-                photoListDlgView = LayoutPhotoListBinding.inflate(layoutInflater)
-                photoListDialog = AlertDialog.Builder(this@MainActivity).create().apply {
-                    setCancelable(false)
-                    setView(photoListDlgView.root)
-                }
-
-                photoListDlgView.apply {
-                    svSearchPhoto.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                        override fun onQueryTextSubmit(query: String?): Boolean {
-                            query?.let {
-                                viewModel.searchPhoto(this@MainActivity, it)
-                            }
-                            return false
-                        }
-
-                        override fun onQueryTextChange(newText: String?): Boolean {
-                            newText?.let {
-                                viewModel.searchPhoto(this@MainActivity, it)
-                            }
-                            return false
-                        }
-                    })
-
-                    photoListDlgView.rvSearchResultInList.apply {
-                        val manager = LinearLayoutManager(this@MainActivity)
-                        layoutManager = manager
-                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, viewModel, photoListDialog)
-                        addItemDecoration(DividerItemDecoration(
-                            this@MainActivity, manager.orientation
-                        ))
-                    }
-
-                    btnExitPhotoList.setOnClickListener { photoListDialog.dismiss() }
-                }
-
-                photoListDialog.show()
-            }
-
-            btnNowLocation.setOnClickListener {
-                naverMap.cameraPosition = CameraPosition(
-                    LatLng(viewModel.location.value!!), 15.0
-                )
             }
         }
     }
@@ -456,12 +390,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             btnAddPhoto.run {
                 isVisible = !isVisible
             }
-            btnShowList.run {
-                isVisible = !isVisible
-            }
-            btnNowLocation.run {
-                isVisible = !isVisible
-            }
         }
         if(supportActionBar?.isShowing == true) supportActionBar?.hide() else supportActionBar?.show()
     }
@@ -471,5 +399,59 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             map[uri.toString()]?.map = null
         }
         viewModel.deleteUri(this@MainActivity, uri)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_toolbar, menu)
+        return false
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.menu_now_location -> {
+                naverMap.cameraPosition = CameraPosition(
+                    LatLng(viewModel.location.value!!), 15.0
+                )
+            }
+            R.id.menu_photo_list -> {
+                photoListDlgView = LayoutPhotoListBinding.inflate(layoutInflater)
+                photoListDialog = AlertDialog.Builder(this@MainActivity).create().apply {
+                    setCancelable(false)
+                    setView(photoListDlgView.root)
+                }
+
+                photoListDlgView.apply {
+                    svSearchPhoto.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                        override fun onQueryTextSubmit(query: String?): Boolean {
+                            query?.let {
+                                viewModel.searchPhoto(this@MainActivity, it)
+                            }
+                            return false
+                        }
+
+                        override fun onQueryTextChange(newText: String?): Boolean {
+                            newText?.let {
+                                viewModel.searchPhoto(this@MainActivity, it)
+                            }
+                            return false
+                        }
+                    })
+
+                    photoListDlgView.rvSearchResultInList.apply {
+                        val manager = LinearLayoutManager(this@MainActivity)
+                        layoutManager = manager
+                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, viewModel, photoListDialog)
+                        addItemDecoration(DividerItemDecoration(
+                            this@MainActivity, manager.orientation
+                        ))
+                    }
+
+                    btnExitPhotoList.setOnClickListener { photoListDialog.dismiss() }
+                }
+
+                photoListDialog.show()
+            }
+        }
+        return false
     }
 }

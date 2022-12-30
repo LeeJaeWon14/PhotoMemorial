@@ -14,6 +14,8 @@
     <string name="str_menu_search">검색</string>
     <string name="str_dialog_close">닫기</string>
     <string name="str_remove">삭제</string>
+    <string name="str_now_location">현재위치</string>
+    <string name="str_photo_list">사진목록</string>
     
     <string name="standard_uri">media/external/images/media/</string>
 </resources>

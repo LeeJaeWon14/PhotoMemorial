@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".view.MainActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -12,11 +11,6 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:layout_alignParentTop="true">
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/sv_search"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:queryHint="검색 .." />
     </androidx.appcompat.widget.Toolbar>
 
     <fragment
@@ -32,24 +26,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/tb_search_bar"  />
-
-    <Button
-        android:id="@+id/btn_now_location"
-        android:layout_width="40dp"
-        android:layout_height="50dp"
-        android:layout_alignEnd="@+id/btn_add_photo"
-        android:layout_above="@+id/btn_show_list"
-        android:paddingTop="7dp"
-        android:drawableTop="@drawable/ic_baseline_my_location_24"/>
-
-    <Button
-        android:id="@+id/btn_show_list"
-        android:layout_width="40dp"
-        android:layout_height="50dp"
-        android:layout_alignEnd="@+id/btn_add_photo"
-        android:layout_above="@+id/btn_add_photo"
-        android:paddingTop="7dp"
-        android:drawableTop="@drawable/ic_baseline_manage_search_24"/>
 
     <Button
         android:id="@+id/btn_add_photo"
