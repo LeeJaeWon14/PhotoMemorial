@@ -75,17 +75,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 fm.beginTransaction().add(R.id.fm_map, it).commit()
             }
 
+        initUi()
+    }
+
+    private fun initUi() {
         // init UI
         binding.apply {
-            rvSearchResult.apply {
-                isVisible = false
-                val manager = LinearLayoutManager(this@MainActivity)
-                layoutManager = manager
-                adapter
-                addItemDecoration(DividerItemDecoration(
-                    this@MainActivity, manager.orientation
-                ))
-            }
+//            rvSearchResult.apply {
+//                isVisible = false
+//                val manager = LinearLayoutManager(this@MainActivity)
+//                layoutManager = manager
+//                adapter
+//                addItemDecoration(DividerItemDecoration(
+//                    this@MainActivity, manager.orientation
+//                ))
+//            }
             setSupportActionBar(tbSearchBar)
             supportActionBar?.setDisplayShowTitleEnabled(false)
 
@@ -124,6 +128,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
 
                         override fun onQueryTextChange(newText: String?): Boolean {
+                            newText?.let {
+                                viewModel.searchPhoto(this@MainActivity, it)
+                            }
                             return false
                         }
                     })
@@ -229,19 +236,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var markerListener = Overlay.OnClickListener { overlay ->
         val marker = overlay as Marker
         marker.infoWindow?.close() ?: run {
-            infoWindow.apply {
-                adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
-                    override fun getText(p0: InfoWindow): CharSequence {
-                        return marker.tag.toString()
-                    }
-                }
-                onClickListener = Overlay.OnClickListener { window ->
-                    viewModel.getPhotoUri(this@MainActivity, marker.tag.toString())
-                    (window as InfoWindow).close()
-                    true
-                }
-                open(marker)
-            }
+            viewModel.updateAddressInWindow.value = marker.tag.toString()
         }
 
         true
@@ -346,7 +341,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         dlg.dismiss()
                     }
                     ivShareButton.setOnClickListener {
-//                        val shareIntent = Intent(Intent.ACTION_SEND)
                         startActivity(Intent(
                             Intent.ACTION_SEND
                         ).apply {
@@ -370,19 +364,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             searchPhotoList.observe(this@MainActivity) { list ->
-                photoListDlgView.rvSearchResultInList.apply {
-                    val manager = LinearLayoutManager(this@MainActivity)
-                    layoutManager = manager
-                    adapter = SearchListAdapter(list, viewModel, photoListDialog)
-                    addItemDecoration(DividerItemDecoration(
-                        this@MainActivity, manager.orientation
-                    ))
-                }
+                photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, viewModel, photoListDialog)
             }
 
             photoLocationBySearch.observe(this@MainActivity) { entity ->
                 entity.run {
                     naverMap.cameraPosition = CameraPosition(LatLng(latitude, longitude), 15.0)
+                    updateAddressInWindow.value = entity.address
+                }
+            }
+
+            updateAddressInWindow.observe(this@MainActivity) { address ->
+                infoWindow.apply {
+                    adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
+                        override fun getText(p0: InfoWindow): CharSequence {
+                            return address
+                        }
+                    }
+                    onClickListener = Overlay.OnClickListener { window ->
+                        viewModel.getPhotoUri(this@MainActivity, address)
+                        (window as InfoWindow).close()
+                        true
+                    }
+//                    open(marker)
+
+                    markerList.forEach { map ->
+                        map.keys.forEach {
+                            if(map[it]?.tag == address)
+                                open(map[it]!!)
+                        }
+                    }
                 }
             }
         }

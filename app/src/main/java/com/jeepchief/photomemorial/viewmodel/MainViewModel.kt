@@ -65,4 +65,5 @@ class MainViewModel : ViewModel() {
     }
 
     val photoLocationBySearch: MutableLiveData<PhotoEntity> by lazy { MutableLiveData<PhotoEntity>() }
+    val updateAddressInWindow: MutableLiveData<String> by lazy { MutableLiveData<String>() }
 }
