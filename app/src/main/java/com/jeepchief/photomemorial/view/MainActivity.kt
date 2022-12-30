@@ -43,6 +43,7 @@ import com.naver.maps.map.overlay.InfoWindow
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
 import kotlinx.coroutines.*
+import ted.gun0912.clustering.naver.TedNaverClustering
 import java.io.File
 import java.io.IOException
 
@@ -85,6 +86,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         binding.apply {
             setSupportActionBar(tbSearchBar)
             supportActionBar?.setDisplayShowTitleEnabled(false)
+//            supportActionBar?.title = getString()
 
             btnAddPhoto.setOnClickListener {
                 imagePickLauncher.launch("image/*")
@@ -235,6 +237,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
             photoEntity.observe(this@MainActivity) { entities ->
                 if(entities.isEmpty()) return@observe
+//                updateMarkerCluster(entities)
                 entities.forEach { entity ->
                     makeOverlay(entity)
                 }
@@ -263,6 +266,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
                     setView(dlgView.root)
                     setCancelable(false)
+                    window?.setBackgroundDrawableResource(R.drawable.dialog_border)
                 }
 
                 dlgView.apply {
@@ -418,14 +422,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoListDialog = AlertDialog.Builder(this@MainActivity).create().apply {
                     setCancelable(false)
                     setView(photoListDlgView.root)
+                    window?.setBackgroundDrawableResource(R.drawable.dialog_border)
                 }
 
                 photoListDlgView.apply {
                     svSearchPhoto.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                         override fun onQueryTextSubmit(query: String?): Boolean {
-                            query?.let {
-                                viewModel.searchPhoto(this@MainActivity, it)
-                            }
                             return false
                         }
 
@@ -453,5 +455,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         return false
+    }
+
+    private fun updateMarkerCluster(list: List<PhotoEntity>) {
+        TedNaverClustering.with<PhotoEntity>(this, naverMap)
+            .items(list)
+            .make()
     }
 }

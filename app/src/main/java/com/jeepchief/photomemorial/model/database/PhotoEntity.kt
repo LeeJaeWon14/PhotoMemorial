@@ -1,10 +1,11 @@
 package com.jeepchief.photomemorial.model.database
 
-import android.graphics.Bitmap
 import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import ted.gun0912.clustering.clustering.TedClusterItem
+import ted.gun0912.clustering.geometry.TedLatLng
 
 @Entity
 data class PhotoEntity(
@@ -20,4 +21,8 @@ data class PhotoEntity(
 
     @ColumnInfo(name = "address")
     var address: String
-)
+) : TedClusterItem {
+    override fun getTedLatLng(): TedLatLng {
+        return TedLatLng(latitude, longitude)
+    }
+}
