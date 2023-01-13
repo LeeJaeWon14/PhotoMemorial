@@ -11,6 +11,8 @@
     <string name="msg_not_allowed_duplication">이미 저장되어 있는 사진입니다.</string>
     <string name="msg_only_allowed_from_gallery">갤러리에서 사진을 선택해주세요.</string>
 
+    <string name="toolbar_title">저장된 추억 %s개</string>
+
     <string name="str_menu_search">검색</string>
     <string name="str_dialog_close">닫기</string>
     <string name="str_remove">삭제</string>

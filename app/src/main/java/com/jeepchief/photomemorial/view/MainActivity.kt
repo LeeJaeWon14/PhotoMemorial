@@ -85,7 +85,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // init UI
         binding.apply {
             setSupportActionBar(tbSearchBar)
-            supportActionBar?.setDisplayShowTitleEnabled(false)
+            supportActionBar?.run {
+                setDisplayShowTitleEnabled(false)
+                title
+            }
 //            supportActionBar?.title = getString()
 
             btnAddPhoto.setOnClickListener {
@@ -238,6 +241,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             photoEntity.observe(this@MainActivity) { entities ->
                 if(entities.isEmpty()) return@observe
 //                updateMarkerCluster(entities)
+                supportActionBar?.title = String.format(
+                    getString(R.string.toolbar_title),
+                    entities.size.toString()
+                )
                 entities.forEach { entity ->
                     makeOverlay(entity)
                 }
