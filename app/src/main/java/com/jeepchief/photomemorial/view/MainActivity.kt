@@ -84,12 +84,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initUi() {
         // init UI
         binding.apply {
-            setSupportActionBar(tbSearchBar)
-            supportActionBar?.run {
-                setDisplayShowTitleEnabled(false)
-                title
+            tbSearchBar.apply {
+                setTitleTextColor(Color.WHITE)
+                setSupportActionBar(this)
             }
-//            supportActionBar?.title = getString()
+            supportActionBar?.setDisplayShowTitleEnabled(true)
 
             btnAddPhoto.setOnClickListener {
                 imagePickLauncher.launch("image/*")
@@ -467,6 +466,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMarkerCluster(list: List<PhotoEntity>) {
         TedNaverClustering.with<PhotoEntity>(this, naverMap)
             .items(list)
+//            .markerClickListener {
+//                viewModel.getPhotoUri(this@MainActivity, )
+//            }
             .make()
     }
 }
