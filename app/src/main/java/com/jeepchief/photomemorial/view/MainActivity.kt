@@ -253,7 +253,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 // check exist with photo
                 val isExist = try {
                     this@MainActivity.contentResolver.openInputStream(uri)?.use {
-
                     }
                     true
                 }

@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="10dp">
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/sv_search_photo"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="match_parent">
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/sv_search_photo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_search_result_in_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/sv_search_photo" />
-
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_search_result_in_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/sv_search_photo" />
+    </RelativeLayout>
     <Button
         android:id="@+id/btn_exit_photo_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/str_dialog_close"
-        android:layout_alignParentBottom="true" />
-</RelativeLayout>
+        android:layout_gravity="bottom"
+        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

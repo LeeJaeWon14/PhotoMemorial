@@ -30,6 +30,7 @@ class SearchListAdapter(
         holder.apply {
             tvAddress.text = list[position].address
             llAddressItem.setOnClickListener {
+//                CoroutineScope(Dispatchers.Default).launch { delay(700) }
                 searchAction.invoke(list[position])
                 dlg.dismiss()
             }
