@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var mapFragment: MapFragment
     private lateinit var naverMap: NaverMap
-    private lateinit var infoWindow: InfoWindow
+    private var infoWindow: InfoWindow? = null
     private val markerList = mutableListOf<MutableMap<String, Marker>>()
     private val markerMap = mutableMapOf<String, Marker>()
     private lateinit var photoListDlgView: LayoutPhotoListBinding
@@ -187,7 +187,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         this@MainActivity.naverMap = map.apply {
             locationTrackingMode = LocationTrackingMode.NoFollow
             setOnMapClickListener { _, _ ->
-                infoWindow.close()
+                infoWindow?.close()
                 hideUi()
             }
             uiSettings.apply {
@@ -308,7 +308,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             searchPhotoList.observe(this@MainActivity) { list ->
-                photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, viewModel, photoListDialog)
+                photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, photoListDialog, searchAction)
             }
 
             photoLocationBySearch.observe(this@MainActivity) { entity ->
@@ -319,7 +319,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             updateAddressInWindow.observe(this@MainActivity) { address ->
-                infoWindow.apply {
+                infoWindow?.apply {
                     adapter = object : InfoWindow.DefaultTextAdapter(this@MainActivity) {
                         override fun getText(p0: InfoWindow): CharSequence {
                             return address
@@ -448,7 +448,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     photoListDlgView.rvSearchResultInList.apply {
                         val manager = LinearLayoutManager(this@MainActivity)
                         layoutManager = manager
-                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, viewModel, photoListDialog)
+                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, photoListDialog, searchAction)
                         addItemDecoration(DividerItemDecoration(
                             this@MainActivity, manager.orientation
                         ))
@@ -470,5 +470,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //                viewModel.getPhotoUri(this@MainActivity, )
 //            }
             .make()
+    }
+
+    private val searchAction = { entity: PhotoEntity ->
+        viewModel.photoLocationBySearch.value = entity
     }
 }

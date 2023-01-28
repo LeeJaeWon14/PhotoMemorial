@@ -5,21 +5,20 @@
     android:layout_height="match_parent"
     tools:context=".view.MainActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/tb_search_bar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:layout_alignParentTop="true">
-    </androidx.appcompat.widget.Toolbar>
-
     <fragment
         android:id="@+id/fm_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
         android:layout_below="@+id/tb_search_bar"
-        android:name="com.naver.maps.map.MapFragment"/>
+        android:name="com.naver.maps.map.MapFragment"
+        android:layout_alignTop="@id/tb_search_bar"/>
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/tb_search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary" >
+    </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_search_result"

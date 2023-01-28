@@ -9,12 +9,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.model.database.PhotoEntity
-import com.jeepchief.photomemorial.viewmodel.MainViewModel
 
 class SearchListAdapter(
     private val _list: List<PhotoEntity>,
-    private val viewModel: MainViewModel,
-    private val dlg: AlertDialog) : RecyclerView.Adapter<SearchListAdapter.SearchListViewHolder>() {
+    private val dlg: AlertDialog,
+    private val searchAction: (PhotoEntity) -> Unit) : RecyclerView.Adapter<SearchListAdapter.SearchListViewHolder>() {
     private val list get() = _list.sortedBy { it.address }
 
     class SearchListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -31,7 +30,7 @@ class SearchListAdapter(
         holder.apply {
             tvAddress.text = list[position].address
             llAddressItem.setOnClickListener {
-                viewModel.photoLocationBySearch.value = list[position]
+                searchAction.invoke(list[position])
                 dlg.dismiss()
             }
         }
