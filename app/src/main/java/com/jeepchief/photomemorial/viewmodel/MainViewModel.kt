@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 
 class MainViewModel : ViewModel() {
     val location: MutableLiveData<Location> by lazy { MutableLiveData<Location>() }
+    var nowAddress: String = ""
 
     private val _photoEntity: MutableLiveData<List<PhotoEntity>> by lazy { MutableLiveData<List<PhotoEntity>>() }
     val photoEntity: LiveData<List<PhotoEntity>> get() = _photoEntity
@@ -66,4 +67,17 @@ class MainViewModel : ViewModel() {
 
     val photoLocationBySearch: MutableLiveData<PhotoEntity> by lazy { MutableLiveData<PhotoEntity>() }
     val updateAddressInWindow: MutableLiveData<String> by lazy { MutableLiveData<String>() }
+
+    private val _searchAroundPhotoList: MutableLiveData<List<PhotoEntity>> by lazy { MutableLiveData<List<PhotoEntity>>() }
+    val searchAroundPhotoList: LiveData<List<PhotoEntity>> get() = _searchAroundPhotoList
+    fun searchAroundPhoto(context: Context) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                _searchAroundPhotoList.postValue(
+                    PmDatabase.getInstance(context).getPmDAO().selectPhoto()
+                )
+            }
+        }
+    }
+
 }

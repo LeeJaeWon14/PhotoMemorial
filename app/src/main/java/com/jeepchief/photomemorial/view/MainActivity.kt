@@ -26,16 +26,19 @@ import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.databinding.ActivityMainBinding
 import com.jeepchief.photomemorial.databinding.LayoutInfowindowPhotoBinding
 import com.jeepchief.photomemorial.databinding.LayoutPhotoListBinding
+import com.jeepchief.photomemorial.databinding.LayoutShowAroundBinding
 import com.jeepchief.photomemorial.model.database.PhotoEntity
 import com.jeepchief.photomemorial.model.database.PmDatabase
 import com.jeepchief.photomemorial.util.Log
 import com.jeepchief.photomemorial.view.adapter.SearchListAdapter
+import com.jeepchief.photomemorial.view.adapter.ShowAroundAdapter
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -235,6 +238,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         position = LatLng(it)
                     }
                 }
+                nowAddress = getAddress(it.latitude, it.longitude)
             }
 
             photoEntity.observe(this@MainActivity) { entities ->
@@ -338,6 +342,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
                     }
                 }
+            }
+
+            searchAroundPhotoList.observe(this@MainActivity) { list ->
+//                list.forEach { el ->
+//                    Log.e(String.format(
+//                        "now >> %s, el >> %s, contains >> %s",
+//                        viewModel.nowAddress.split(" ")[1],
+//                        el.address,
+//                        el.address.contains(viewModel.nowAddress.split(" ")[1])
+//                    ))
+//                }
+//                list.filter { it.address.contains(viewModel.nowAddress.split(" ")[1]) }.also { aroundList ->
+//
+//                }
+
+                BottomSheetDialog(this@MainActivity).also { sheet ->
+                    val sheetBinding = LayoutShowAroundBinding.inflate(layoutInflater).apply {
+                        rvShowAround.apply {
+                            layoutManager = LinearLayoutManager(this@MainActivity)
+                            adapter = ShowAroundAdapter(
+//                                list.filter { it.address.contains(viewModel.nowAddress.split(" ")[2]) }
+                                list.filter { it.address.contains("의정부") },
+                                searchAction,
+                                sheet
+                            )
+                        }
+                    }
+//                    window?.setBackgroundDrawableResource(R.drawable.bottom_sheet_border)
+                    setContentView(sheetBinding.root)
+                }.show()
             }
         }
     }
@@ -457,6 +491,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
 
                 photoListDialog.show()
+            }
+            R.id.menu_show_around -> {
+                viewModel.searchAroundPhoto(this)
             }
         }
         return false

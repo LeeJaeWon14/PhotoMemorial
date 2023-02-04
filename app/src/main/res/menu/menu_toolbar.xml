@@ -12,4 +12,10 @@
         android:title="@string/str_photo_list"
         android:iconTint="@color/white"
         app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/menu_show_around"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:title="@string/str_show_around"
+        android:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
 </menu>
