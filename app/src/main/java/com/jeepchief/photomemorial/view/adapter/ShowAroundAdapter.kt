@@ -7,14 +7,14 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.jeepchief.photomemorial.R
 import com.jeepchief.photomemorial.model.database.PhotoEntity
+import com.jeepchief.photomemorial.util.Log
 
 class ShowAroundAdapter(
     private val list: List<PhotoEntity>,
     private val searchAction: (PhotoEntity) -> Unit,
-    private val sheet: BottomSheetDialog) : RecyclerView.Adapter<ShowAroundAdapter.ShowAroundViewHolder>() {
+    private val dismiss: () -> Unit) : RecyclerView.Adapter<ShowAroundAdapter.ShowAroundViewHolder>() {
     class ShowAroundViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvAround: TextView = view.findViewById(R.id.tv_around)
         val ivAround: ImageView = view.findViewById(R.id.iv_around)
@@ -28,10 +28,12 @@ class ShowAroundAdapter(
 
     override fun onBindViewHolder(holder: ShowAroundViewHolder, position: Int) {
         holder.apply {
-            tvAround.text = list[position].address
+            tvAround.text = list[position].address.also { Log.e("address >> $it") }
             ivAround.setImageURI(list[position].photo)
-            rlSearchAround.setOnClickListener { searchAction.invoke(list[position]) }
-            sheet.dismiss()
+            rlSearchAround.setOnClickListener {
+                searchAction.invoke(list[position])
+                dismiss.invoke()
+            }
         }
     }
 

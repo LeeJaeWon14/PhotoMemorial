@@ -3,8 +3,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rl_search_around"
-    android:background="?selectableItemBackground">
+    android:id="@+id/rl_search_around" >
     <TextView
         android:id="@+id/tv_around"
         android:layout_width="match_parent"

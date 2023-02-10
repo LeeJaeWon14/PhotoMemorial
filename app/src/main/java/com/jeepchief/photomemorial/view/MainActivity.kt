@@ -358,6 +358,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //                }
 
                 BottomSheetDialog(this@MainActivity).also { sheet ->
+                    val dismiss = { sheet.dismiss() }
                     val sheetBinding = LayoutShowAroundBinding.inflate(layoutInflater).apply {
                         rvShowAround.apply {
                             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -365,12 +366,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 //                                list.filter { it.address.contains(viewModel.nowAddress.split(" ")[2]) }
                                 list.filter { it.address.contains("의정부") },
                                 searchAction,
-                                sheet
+                                dismiss
                             )
                         }
                     }
-//                    window?.setBackgroundDrawableResource(R.drawable.bottom_sheet_border)
-                    setContentView(sheetBinding.root)
+                    window?.setBackgroundDrawableResource(R.drawable.bottom_sheet_border)
+                    sheet.setContentView(sheetBinding.root)
                 }.show()
             }
         }
