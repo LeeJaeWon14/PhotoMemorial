@@ -524,11 +524,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         val baseAddress = getAddress(latlng.latitude, latlng.longitude).split(" ")
                         "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
                     }.also { Log.e("now Address >> $it") }
-                } catch(e: IndexOutOfBoundsException) {
+                    viewModel.searchAroundPhoto(this)
+                } catch(e: Exception) {
                     Log.e(e.toString())
                     Toast.makeText(this@MainActivity, getString(R.string.msg_cannot_get_address), Toast.LENGTH_SHORT).show()
+                    progressDlgDismiss()
                 }
-                viewModel.searchAroundPhoto(this)
             }
         }
         return false
