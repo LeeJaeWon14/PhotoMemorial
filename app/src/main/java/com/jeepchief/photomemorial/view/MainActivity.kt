@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val markerMap = mutableMapOf<String, Marker>()
     private lateinit var photoListDlgView: LayoutPhotoListBinding
     private lateinit var photoListDialog: AlertDialog
+    private var isCameraMoving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -199,6 +200,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 isTiltGesturesEnabled = false
                 isRotateGesturesEnabled = false
             }
+//            addOnCameraChangeListener { _, _ ->
+//                if(isCameraMoving) return@addOnCameraChangeListener
+//                CoroutineScope(Dispatchers.Main).launch {
+//                    isCameraMoving = true
+//                    val latlng = cameraPosition.target
+//                    viewModel.nowAddress = run {
+//                        val baseAddress = getAddress(latlng.latitude, latlng.longitude).split(" ")
+//                        "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
+//                    }.also { Log.e("now Address >> $it") }
+//                    isCameraMoving = false
+//                }
+//            }
         }
 
         initLocation()
@@ -238,10 +251,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         position = LatLng(it)
                     }
                 }
-                nowAddress = run {
-                    val baseAddress = getAddress(it.latitude, it.longitude).split(" ")
-                    "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
-                }.also { Log.e("now Address >> $it") }
+//                nowAddress = run {
+//                    val baseAddress = getAddress(it.latitude, it.longitude).split(" ")
+//                    "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
+//                }.also { Log.e("now Address >> $it") }
             }
 
             photoEntity.observe(this@MainActivity) { entities ->
@@ -348,13 +361,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             searchAroundPhotoList.observe(this@MainActivity) { list ->
-
+                Log.e("around photo list count is ${list.size}")
                 BottomSheetDialog(this@MainActivity).also { sheet ->
                     val dismiss = { sheet.dismiss() }
                     val sheetBinding = LayoutShowAroundBinding.inflate(layoutInflater).apply {
                         rvShowAround.apply {
                             layoutManager = LinearLayoutManager(this@MainActivity)
-                            if(list.isNullOrEmpty()/*.not()*/) {
+                            // todo: Will adding room query and this if statement.
+                            if(list.none { it.address.contains(viewModel.nowAddress) }) {
                                 Toast.makeText(
                                     this@MainActivity,
                                     getString(R.string.msg_cannot_found_from_around),
@@ -504,6 +518,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             R.id.menu_show_around -> {
                 DialogHelper.progressDialog(this).show()
+                val latlng = naverMap.cameraPosition.target
+                try {
+                    viewModel.nowAddress = run {
+                        val baseAddress = getAddress(latlng.latitude, latlng.longitude).split(" ")
+                        "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
+                    }.also { Log.e("now Address >> $it") }
+                } catch(e: IndexOutOfBoundsException) {
+                    Log.e(e.toString())
+                    Toast.makeText(this@MainActivity, getString(R.string.msg_cannot_get_address), Toast.LENGTH_SHORT).show()
+                }
                 viewModel.searchAroundPhoto(this)
             }
         }
