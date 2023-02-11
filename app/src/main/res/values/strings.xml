@@ -21,6 +21,9 @@
     <string name="str_now_location">현재위치</string>
     <string name="str_photo_list">사진목록</string>
     <string name="str_show_around">주변보기</string>
+    <string name="str_not_show_again">다시 보지 않기</string>
+    <string name="str_desc_toolbar">왼쪽부터 현재 위치, 주소 검색, 주변 사진입니다.</string>
+    <string name="str_desc_zoom">오른쪽 버튼을 사용하여 지도를 줌인, 줌아웃합니다.</string>
     
     <string name="standard_uri">media/external/images/media/</string>
 </resources>

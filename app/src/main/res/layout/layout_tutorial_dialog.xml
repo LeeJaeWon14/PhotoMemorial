@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:text="@string/str_desc_toolbar"
+        android:textColor="@color/white"
+        tools:textColor = "@color/black"
+        android:layout_marginTop="50dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/str_desc_zoom"
+        android:textColor="@color/white"
+        tools:textColor = "@color/black"/>
+
+
+    <Button
+        android:id="@+id/btn_tutorial_close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/str_dialog_close"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp" />
+
+    <CheckBox
+        android:id="@+id/chk_tutorial_remove"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/str_not_show_again"
+        android:layout_toEndOf="@+id/btn_tutorial_close"
+        android:layout_alignParentBottom="true"
+        android:buttonTint="@color/colorPrimary"
+        android:textColor="@color/white"
+        android:layout_margin="10dp" />
+</RelativeLayout>

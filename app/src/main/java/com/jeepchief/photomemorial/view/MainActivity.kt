@@ -7,6 +7,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteConstraintException
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
@@ -30,13 +31,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
 import com.jeepchief.photomemorial.R
-import com.jeepchief.photomemorial.databinding.ActivityMainBinding
-import com.jeepchief.photomemorial.databinding.LayoutInfowindowPhotoBinding
-import com.jeepchief.photomemorial.databinding.LayoutPhotoListBinding
-import com.jeepchief.photomemorial.databinding.LayoutShowAroundBinding
+import com.jeepchief.photomemorial.databinding.*
 import com.jeepchief.photomemorial.model.database.PhotoEntity
 import com.jeepchief.photomemorial.model.database.PmDatabase
 import com.jeepchief.photomemorial.util.Log
+import com.jeepchief.photomemorial.util.Pref
 import com.jeepchief.photomemorial.view.adapter.SearchListAdapter
 import com.jeepchief.photomemorial.view.adapter.ShowAroundAdapter
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
@@ -72,6 +71,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         observeViewModel()
         checkPermission()
+        checkPref()
 
         // init naver maps
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient("kd3ptmxe5c")
@@ -546,5 +546,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val searchAction = { entity: PhotoEntity ->
         viewModel.photoLocationBySearch.value = entity
+    }
+
+    private fun checkPref() {
+        if (Pref.getInstance(this)?.getBoolean(Pref.TUTORIAL_SHOWN)
+                .also { Log.e("tutorial shown is >> $it") } == false
+        ) {
+            showTutorial()
+        }
+    }
+
+    private fun showTutorial() {
+        val dlgView = LayoutTutorialDialogBinding.inflate(layoutInflater)
+        DialogHelper.customDialog(
+            this,
+            ColorDrawable(Color.TRANSPARENT)
+        ) { dlg ->
+            dlgView.apply {
+                btnTutorialClose.setOnClickListener {
+                    if (chkTutorialRemove.isChecked)
+                        Pref.getInstance(this@MainActivity)
+                            ?.setValue(Pref.TUTORIAL_SHOWN, chkTutorialRemove.isChecked)
+                    dlg.dismiss()
+                }
+            }
+        }.show()
     }
 }

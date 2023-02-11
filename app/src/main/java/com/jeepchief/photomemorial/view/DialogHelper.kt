@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
 import androidx.viewbinding.ViewBinding
@@ -47,13 +48,18 @@ object DialogHelper {
      */
     fun customDialog(
         context: Context,
-        backgroundRes: Int? = null,
+        backgroundRes: Any? = null,
         view: (AlertDialog) -> ViewBinding
     ) : AlertDialog {
         return AlertDialog.Builder(context).create().apply {
             setView(view.invoke(this).root)
             setCancelable(false)
-            backgroundRes?.let { window?.setBackgroundDrawableResource(it) }
+            backgroundRes?.let {
+                when(it) {
+                    is Drawable -> window?.setBackgroundDrawable(it)
+                    is Int -> window?.setBackgroundDrawableResource(it)
+                }
+            }
         }
     }
 
