@@ -238,7 +238,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         position = LatLng(it)
                     }
                 }
-                nowAddress = getAddress(it.latitude, it.longitude)
+                nowAddress = run {
+                    val baseAddress = getAddress(it.latitude, it.longitude).split(" ")
+                    "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
+                }.also { Log.e("now Address >> $it") }
             }
 
             photoEntity.observe(this@MainActivity) { entities ->
@@ -345,35 +348,41 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             searchAroundPhotoList.observe(this@MainActivity) { list ->
-//                list.forEach { el ->
-//                    Log.e(String.format(
-//                        "now >> %s, el >> %s, contains >> %s",
-//                        viewModel.nowAddress.split(" ")[1],
-//                        el.address,
-//                        el.address.contains(viewModel.nowAddress.split(" ")[1])
-//                    ))
-//                }
-//                list.filter { it.address.contains(viewModel.nowAddress.split(" ")[1]) }.also { aroundList ->
-//
-//                }
 
                 BottomSheetDialog(this@MainActivity).also { sheet ->
                     val dismiss = { sheet.dismiss() }
                     val sheetBinding = LayoutShowAroundBinding.inflate(layoutInflater).apply {
                         rvShowAround.apply {
                             layoutManager = LinearLayoutManager(this@MainActivity)
-                            adapter = ShowAroundAdapter(
-//                                list.filter { it.address.contains(viewModel.nowAddress.split(" ")[2]) }
-                                list.filter { it.address.contains("의정부") },
-                                searchAction,
-                                dismiss
-                            )
+                            if(list.isNullOrEmpty()/*.not()*/) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    getString(R.string.msg_cannot_found_from_around),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                progressDlgDismiss()
+                                return@observe
+                            }
+                            else {
+                                adapter = ShowAroundAdapter(
+                                    list.filter { it.address.contains(viewModel.nowAddress) },
+                                    searchAction,
+                                    dismiss
+                                )
+                            }
                         }
                     }
-                    window?.setBackgroundDrawableResource(R.drawable.bottom_sheet_border)
                     sheet.setContentView(sheetBinding.root)
                 }.show()
+                progressDlgDismiss()
             }
+        }
+    }
+
+    private fun progressDlgDismiss() {
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(500)
+            DialogHelper.progressDialog(this@MainActivity).dismiss()
         }
     }
 
@@ -494,6 +503,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoListDialog.show()
             }
             R.id.menu_show_around -> {
+                DialogHelper.progressDialog(this).show()
                 viewModel.searchAroundPhoto(this)
             }
         }

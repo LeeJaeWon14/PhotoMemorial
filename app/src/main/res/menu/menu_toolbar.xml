@@ -14,7 +14,7 @@
         app:showAsAction="ifRoom" />
 
     <item android:id="@+id/menu_show_around"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@drawable/ic_baseline_list_24"
         android:title="@string/str_show_around"
         android:iconTint="@color/white"
         app:showAsAction="ifRoom" />
