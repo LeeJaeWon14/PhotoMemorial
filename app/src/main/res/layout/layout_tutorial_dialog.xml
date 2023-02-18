@@ -3,6 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools">
+<!--    <ImageView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:src="@drawable/tutorial_capture" />-->
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,10 +20,11 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="20dp"
         android:text="@string/str_desc_zoom"
         android:textColor="@color/white"
-        tools:textColor = "@color/black"/>
+        tools:textColor="@color/black" />
 
 
     <Button
@@ -26,6 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/str_dialog_close"
+        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:layout_margin="10dp" />
 
@@ -38,5 +45,6 @@
         android:layout_alignParentBottom="true"
         android:buttonTint="@color/colorPrimary"
         android:textColor="@color/white"
+        android:textSize="11sp"
         android:layout_margin="10dp" />
 </RelativeLayout>
