@@ -14,6 +14,8 @@
     <string name="msg_cannot_get_address">주소를 가져올 수 없습니다. 맵을 확대해서 다시 시도하세요.</string>
 
     <string name="toolbar_title">저장된 추억 %s개</string>
+    <string name="photo_get_location">촬영 위치 : %s</string>
+    <string name="photo_get_date">촬영 날짜 : %s</string>
 
     <string name="str_menu_search">검색</string>
     <string name="str_dialog_close">닫기</string>

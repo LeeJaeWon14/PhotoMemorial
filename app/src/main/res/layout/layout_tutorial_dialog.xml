@@ -28,6 +28,7 @@
 
 
     <Button
+        style="@style/BasicButtonStyle"
         android:id="@+id/btn_tutorial_close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,5 +47,6 @@
         android:buttonTint="@color/colorPrimary"
         android:textColor="@color/white"
         android:textSize="11sp"
-        android:layout_margin="10dp" />
+        android:layout_marginBottom="10dp"
+        android:layout_marginStart="5dp"/>
 </RelativeLayout>

@@ -11,16 +11,19 @@ import ted.gun0912.clustering.geometry.TedLatLng
 data class PhotoEntity(
     @PrimaryKey
     @ColumnInfo(name = "photo")
-    var photo: Uri,
+    val photo: Uri,
 
     @ColumnInfo(name = "latitude")
-    var latitude: Double,
+    val latitude: Double,
 
     @ColumnInfo(name = "longitude")
-    var longitude: Double,
+    val longitude: Double,
 
     @ColumnInfo(name = "address")
-    var address: String
+    val address: String,
+
+    @ColumnInfo(name = "take_date")
+    val takeDate: String
 ) : TedClusterItem {
     override fun getTedLatLng(): TedLatLng {
         return TedLatLng(latitude, longitude)

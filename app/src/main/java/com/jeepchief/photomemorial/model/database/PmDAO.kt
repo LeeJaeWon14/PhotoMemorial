@@ -25,4 +25,7 @@ interface PmDAO {
 
     @Query("SELECT * FROM PhotoEntity WHERE address LIKE '%'||:query||'%'")
     fun searchAddress(query: String) : List<PhotoEntity>
+
+    @Query("SELECT * FROM PhotoEntity WHERE photo LIKE '%'||:query||'%'")
+    fun selectEntityWithUri(query: String) : PhotoEntity
 }

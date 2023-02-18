@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var photoListDlgView: LayoutPhotoListBinding
     private lateinit var photoListDialog: AlertDialog
     private var isCameraMoving = false
+    private var isInfoWindowShowing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,12 +125,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 } catch(e: IllegalStateException) {
                     return
                 }
-                // Save with room
+                // Save into room
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         PmDatabase.getInstance(this@MainActivity).getPmDAO()
                             .insertPhoto(PhotoEntity(
-                                uri, it[0], it[1], address
+                                uri, it[0], it[1], address, convertTakeDateTime(exif.getAttribute(ExifInterface.TAG_DATETIME)!!)
                             ))
                         withContext(Dispatchers.Main) {
                             initOverlay(uri, it[0], it[1], address)
@@ -200,18 +202,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 isTiltGesturesEnabled = false
                 isRotateGesturesEnabled = false
             }
-//            addOnCameraChangeListener { _, _ ->
-//                if(isCameraMoving) return@addOnCameraChangeListener
-//                CoroutineScope(Dispatchers.Main).launch {
-//                    isCameraMoving = true
-//                    val latlng = cameraPosition.target
-//                    viewModel.nowAddress = run {
-//                        val baseAddress = getAddress(latlng.latitude, latlng.longitude).split(" ")
-//                        "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
-//                    }.also { Log.e("now Address >> $it") }
-//                    isCameraMoving = false
-//                }
-//            }
         }
 
         initLocation()
@@ -251,15 +241,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         position = LatLng(it)
                     }
                 }
-//                nowAddress = run {
-//                    val baseAddress = getAddress(it.latitude, it.longitude).split(" ")
-//                    "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
-//                }.also { Log.e("now Address >> $it") }
             }
 
             photoEntity.observe(this@MainActivity) { entities ->
                 if(entities.isEmpty()) return@observe
 //                updateMarkerCluster(entities)
+
+                //todo: Will be adding livedata variable for now saved photo count
                 supportActionBar?.title = String.format(
                     getString(R.string.toolbar_title),
                     entities.size.toString()
@@ -267,52 +255,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 entities.forEach { entity ->
                     makeOverlay(entity)
                 }
-            }
-
-            photoUri.observe(this@MainActivity) { uri ->
-                // check exist with photo
-                val isExist = try {
-                    this@MainActivity.contentResolver.openInputStream(uri)?.use {
-                    }
-                    true
-                }
-                catch (e: IOException) {
-                    false
-                }
-
-                if(!isExist) {
-                    Log.e("Not found photo")
-                    Toast.makeText(this@MainActivity, getString(R.string.msg_deleted_photo), Toast.LENGTH_SHORT).show()
-                    removeImage(uri)
-                    return@observe
-                }
-
-                val dlgView = LayoutInfowindowPhotoBinding.inflate(layoutInflater)
-                val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
-                    setView(dlgView.root)
-                    setCancelable(false)
-                    window?.setBackgroundDrawableResource(R.drawable.dialog_border)
-                }
-
-                dlgView.apply {
-                    ivInfowindow.setImageURI(uri)
-                    btnCloseDialog.setOnClickListener {
-                        dlg.dismiss()
-                    }
-                    btnRemoveImage.setOnClickListener {
-                        removeImage(uri)
-                        dlg.dismiss()
-                    }
-                    ivShareButton.setOnClickListener {
-                        startActivity(Intent(
-                            Intent.ACTION_SEND
-                        ).apply {
-                            type = "image/*"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                        })
-                    }
-                }
-                dlg.show()
             }
 
             deleteUriResult.observe(this@MainActivity) { rowCnt ->
@@ -327,7 +269,79 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             searchPhotoList.observe(this@MainActivity) { list ->
-                photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, photoListDialog, searchAction)
+                when(list.size) {
+                    1 -> {
+                        list[0].run {
+                            // check exist with photo
+                            val isExist = try {
+                                this@MainActivity.contentResolver.openInputStream(photo)?.use {
+                                }
+                                true
+                            }
+                            catch (e: IOException) {
+                                false
+                            }
+
+                            if(!isExist) {
+                                Log.e("Not found photo")
+                                Toast.makeText(this@MainActivity, getString(R.string.msg_deleted_photo), Toast.LENGTH_SHORT).show()
+                                removeImage(photo)
+                                return@observe
+                            }
+
+                            val dlgView = LayoutInfowindowPhotoBinding.inflate(layoutInflater)
+                            val dlg = AlertDialog.Builder(this@MainActivity).create().apply {
+                                setView(dlgView.root)
+                                setCancelable(false)
+                                window?.setBackgroundDrawableResource(R.drawable.dialog_border)
+                            }
+
+                            dlgView.apply {
+                                ivInfowindow.run {
+                                    setImageURI(photo)
+                                    setOnScaleChangeListener { scaleFactor, focusX, focusY ->
+                                        if(scaleFactor <= 1.0f) {
+                                            CoroutineScope(Dispatchers.Main).launch {
+                                                delay(100)
+                                                llButtonLayout.isVisible = true
+                                                llPhotoInfo.isVisible = true
+                                            }
+                                        }
+                                        else {
+                                            llButtonLayout.isVisible = false
+                                            llPhotoInfo.isVisible = false
+//                                            setViewVisible(llButtonLayout, llPhotoInfo)
+                                        }
+                                    }
+                                    setOnClickListener {
+                                        llButtonLayout.isVisible = true
+                                        llPhotoInfo.isVisible = true
+//                                        setViewVisible(llButtonLayout, llPhotoInfo)
+                                    }
+                                }
+                                btnCloseDialog.setOnClickListener {
+                                    dlg.dismiss()
+                                }
+                                btnRemoveImage.setOnClickListener {
+                                    removeImage(photo)
+                                    dlg.dismiss()
+                                }
+                                ivShareButton.setOnClickListener {
+                                    startActivity(Intent(
+                                        Intent.ACTION_SEND
+                                    ).apply {
+                                        type = "image/*"
+                                        putExtra(Intent.EXTRA_STREAM, photo)
+                                    })
+                                }
+                                tvTakeDate.text = takeDate
+                                tvTakeLocation.text = address
+                            }
+                            dlg.show()
+                        }
+                    }
+                    else -> photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, photoListDialog, searchAction)
+                }
             }
 
             photoLocationBySearch.observe(this@MainActivity) { entity ->
@@ -345,7 +359,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         }
                     }
                     onClickListener = Overlay.OnClickListener { window ->
-                        viewModel.getPhotoUri(this@MainActivity, address)
+                        isInfoWindowShowing = true
+//                        viewModel.getPhotoUri(this@MainActivity, address)
+                        viewModel.searchPhoto(this@MainActivity, address)
                         (window as InfoWindow).close()
                         true
                     }
@@ -572,4 +588,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }.show()
     }
+
+    private fun convertTakeDateTime(takeDate: String) : String {
+        val strArr = takeDate.split(" ")
+        return strArr[0].replace(":", "/").plus(" ${strArr[1]}")
+            .also { Log.e("return String >> $it") }
+    }
+
+    private fun setViewVisible(vararg views: View) = views.forEach { view -> view.isVisible = !view.isVisible }
 }

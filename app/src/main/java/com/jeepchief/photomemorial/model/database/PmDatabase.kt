@@ -9,10 +9,9 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.jeepchief.photomemorial.util.Converters
 
-@Database(entities = [PhotoEntity::class], version = 1, exportSchema = false)
+@Database(entities = [PhotoEntity::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class PmDatabase : RoomDatabase() {
-    // todo: Will be implement dao.
     abstract fun getPmDAO() : PmDAO
 
     companion object {
@@ -27,14 +26,17 @@ abstract class PmDatabase : RoomDatabase() {
                     context.applicationContext,
                     PmDatabase::class.java,
                     "PhotoMemorial.db"
-                ).build()
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
                 return instance!!
             }
         }
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // TODO("Not yet implemented")
+                database.execSQL("ALTER TABLE 'PhotoEntity' ADD COLUMN 'take_date' TEXT NOT NULL default ''")
+//                database.execSQL("ALTER TABLE 'PhotoEntity' RENAME COLUMN 'photo' TO 'uri'")
             }
         }
     }

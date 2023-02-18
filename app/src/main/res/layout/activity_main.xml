@@ -27,12 +27,10 @@
         android:layout_below="@+id/tb_search_bar"  />
 
     <Button
+        style="@style/BasicButtonStyle"
         android:id="@+id/btn_add_photo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:text="사진 추가"
-        android:textColor="@color/white"
         android:layout_alignParentBottom="true"/>
 </RelativeLayout>

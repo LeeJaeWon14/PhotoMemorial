@@ -29,18 +29,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private val _photoUri: MutableLiveData<Uri> by lazy { MutableLiveData<Uri>() }
-    val photoUri: LiveData<Uri> get() = _photoUri
-    fun getPhotoUri(context: Context, address: String) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                _photoUri.postValue(
-                    PmDatabase.getInstance(context).getPmDAO().getPhotoUri(address)
-                )
-            }
-        }
-    }
-
     private val _deleteUriResult: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
     val deleteUriResult: LiveData<Int> get() = _deleteUriResult
     fun deleteUri(context: Context, uri: Uri) {
@@ -79,5 +67,4 @@ class MainViewModel : ViewModel() {
             }
         }
     }
-
 }

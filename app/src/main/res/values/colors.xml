@@ -12,4 +12,7 @@
     <color name="colorAccent">#6CCCF5</color>
 
     <color name="dark_mode">#FF373b37</color>
+
+    <!-- Ripple color -->
+    <color name="ripple_color">#4D000000</color>
 </resources>
