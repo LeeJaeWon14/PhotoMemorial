@@ -26,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
+import androidx.lifecycle.MutableLiveData
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -63,6 +64,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var photoListDialog: AlertDialog
     private var isCameraMoving = false
     private var isInfoWindowShowing = false
+    private val savedPhotoCount: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +87,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
         initUi()
+        savedPhotoCount.observe(this) { count ->
+            supportActionBar?.title = String.format(
+                getString(R.string.toolbar_title),
+                count
+            )
+        }
     }
 
     private fun initUi() {
@@ -138,6 +146,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             markerList.forEach { map ->
                                 map[uri.toString()]?.performClick()
                             }
+                            savedPhotoCount.value = savedPhotoCount.value?.plus(1)
                         }
                     } catch(e: SQLiteConstraintException) {
                         withContext(Dispatchers.Main) {
@@ -246,12 +255,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             photoEntity.observe(this@MainActivity) { entities ->
                 if(entities.isEmpty()) return@observe
 //                updateMarkerCluster(entities)
-
-                //todo: Will be adding livedata variable for now saved photo count
-                supportActionBar?.title = String.format(
-                    getString(R.string.toolbar_title),
-                    entities.size.toString()
-                )
+                savedPhotoCount.value = entities.size // Saved photo count is updated.
                 entities.forEach { entity ->
                     makeOverlay(entity)
                 }
@@ -261,6 +265,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 when(rowCnt) {
                     1 -> {
 //                        mapFragment.getMapAsync(this@MainActivity)
+                        savedPhotoCount.value = savedPhotoCount.value?.minus(1)
                     }
                     else -> {
                         Log.e("Uri delete fail..")
