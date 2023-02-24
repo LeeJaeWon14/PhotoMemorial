@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val markerMap = mutableMapOf<String, Marker>()
     private lateinit var photoListDlgView: LayoutPhotoListBinding
     private lateinit var photoListDialog: AlertDialog
-    private var isCameraMoving = false
+    private var isSearching = false
     private var isInfoWindowShowing = false
     private val savedPhotoCount: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
@@ -345,7 +345,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                             dlg.show()
                         }
                     }
-                    else -> photoListDlgView.rvSearchResultInList.adapter = SearchListAdapter(list, photoListDialog, searchAction)
+                    else -> photoListDlgView.rvSearchResultInList.adapter =
+                        SearchListAdapter(
+                            list, { photoListDialog.dismiss() }, searchAction
+                        )
                 }
             }
 
@@ -386,6 +389,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 BottomSheetDialog(this@MainActivity).also { sheet ->
                     val dismiss = { sheet.dismiss() }
                     val sheetBinding = LayoutShowAroundBinding.inflate(layoutInflater).apply {
+                        tvAroundAddress.text = viewModel.nowAddress
                         rvShowAround.apply {
                             layoutManager = LinearLayoutManager(this@MainActivity)
                             // todo: Will adding room query and this if statement.
@@ -414,11 +418,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun progressDlgDismiss() {
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(500)
-            DialogHelper.progressDialog(this@MainActivity).dismiss()
-        }
+    private fun progressDlgDismiss() = CoroutineScope(Dispatchers.Main).launch {
+        delay(500)
+        DialogHelper.progressDialog(this@MainActivity).dismiss()
     }
 
     private fun checkPermission() {
@@ -524,9 +526,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     })
 
                     photoListDlgView.rvSearchResultInList.apply {
+                        val dismiss = { photoListDialog.dismiss() }
                         val manager = LinearLayoutManager(this@MainActivity)
                         layoutManager = manager
-                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, photoListDialog, searchAction)
+                        adapter = SearchListAdapter(viewModel.photoEntity.value!!, dismiss, searchAction)
                         addItemDecoration(DividerItemDecoration(
                             this@MainActivity, manager.orientation
                         ))
@@ -543,7 +546,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 try {
                     viewModel.nowAddress = run {
                         val baseAddress = getAddress(latlng.latitude, latlng.longitude).split(" ")
-                        "${baseAddress[0]} ${baseAddress[1]}" // ex) 경기도 의정부시
+                        "${baseAddress[0]} ${baseAddress[1]} ${baseAddress[2]}" // ex) 경기도 의정부시
                     }.also { Log.e("now Address >> $it") }
                     viewModel.searchAroundPhoto(this)
                 } catch(e: Exception) {

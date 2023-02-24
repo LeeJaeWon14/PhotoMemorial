@@ -2,10 +2,19 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bottom_sheet_border" >
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/bottom_sheet_border">
+    <TextView
+        style="@style/BasicTextStyle"
+        android:id="@+id/tv_around_address"
+        tools:text = "Address is here"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_show_around"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="20dp"/>
+        android:padding="20dp"
+        android:layout_below="@id/tv_around_address"/>
 </RelativeLayout>
