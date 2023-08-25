@@ -38,7 +38,7 @@ class Log {
             sb.append(ste.fileName.replace(".java", "", false))
             sb.append("::")
             sb.append(ste.methodName)
-            sb.append("]")
+            sb.append("] ")
             sb.append(message)
             return sb.toString()
         }

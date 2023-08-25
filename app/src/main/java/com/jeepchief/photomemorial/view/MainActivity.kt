@@ -12,6 +12,7 @@ import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.Menu
@@ -50,6 +51,7 @@ import kotlinx.coroutines.*
 import ted.gun0912.clustering.naver.TedNaverClustering
 import java.io.File
 import java.io.IOException
+import kotlin.math.absoluteValue
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMainBinding
@@ -67,6 +69,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private val savedPhotoCount: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.e("onCreate()")
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -198,6 +201,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     @UiThread
     override fun onMapReady(map: NaverMap) {
+        Log.e("onMapReady()")
         // For map setting.
         this@MainActivity.naverMap = map.apply {
             locationTrackingMode = LocationTrackingMode.NoFollow
@@ -426,10 +430,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun checkPermission() {
         val permissionListener = object : PermissionListener {
             override fun onPermissionGranted() {
+                Log.e("onPermissionGranted()")
                 mapFragment.getMapAsync(this@MainActivity)
             }
 
             override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
+                Log.e("onPermissionDenied()")
+                Log.e("denied permissions >> $deniedPermissions")
                 Toast.makeText(this@MainActivity, getString(R.string.str_permission_denied_message), Toast.LENGTH_SHORT).show()
             }
         }
@@ -437,12 +444,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         TedPermission.create().apply {
             setPermissionListener(permissionListener)
             setDeniedMessage(getString(R.string.str_permission_denied_message))
-            setPermissions(
+
+            val permissionArray = arrayListOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_MEDIA_LOCATION,
                 Manifest.permission.READ_EXTERNAL_STORAGE
             )
+
+            val minSdk = applicationContext.applicationInfo.minSdkVersion
+            val targetSdk = applicationContext.applicationInfo.targetSdkVersion
+
+            // SDK 버전에 따른 권한 추가
+            for(i in minSdk.absoluteValue .. targetSdk.absoluteValue) {
+                when(i) {
+                    Build.VERSION_CODES.Q -> permissionArray.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+                    Build.VERSION_CODES.TIRAMISU -> {
+                        permissionArray.apply {
+                            add(Manifest.permission.READ_MEDIA_IMAGES)
+                            remove(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
+                    }
+                }
+            }
+
+            setPermissions(*permissionArray.toTypedArray())
         }.check()
     }
 
@@ -459,7 +484,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun getAddress(lat: Double, lon: Double) : String {
         val geo = Geocoder(this)
-        val addressList = geo.getFromLocation(lat, lon, 10)
+        val addressList = geo.getFromLocation(lat, lon, 10)!!
         val address = addressList[0].getAddressLine(0).split(" ")
         if(!address.contains("대한민국")) {
             Toast.makeText(this@MainActivity, getString(R.string.msg_not_available_foreign_country), Toast.LENGTH_SHORT).show()
