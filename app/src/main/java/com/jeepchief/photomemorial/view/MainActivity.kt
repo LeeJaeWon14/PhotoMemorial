@@ -14,13 +14,17 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -68,6 +72,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isInfoWindowShowing = false
     private val savedPhotoCount: MutableLiveData<Int> by lazy { MutableLiveData<Int>() }
 
+    // 임시 flag
+    private var usePhotoPicker = false
+
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.e("onCreate()")
         super.onCreate(savedInstanceState)
@@ -77,8 +85,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         locationManager = getSystemService(LocationManager::class.java)
 
         observeViewModel()
-        checkPermission()
         checkPref()
+        checkPermission()
+        if(!Environment.isExternalStorageManager()) {
+            startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                addCategory("android.intent.category.DEFAULT")
+                data = Uri.parse("package:${applicationContext.packageName}")
+            })
+        }
 
         // init naver maps
         NaverMapSdk.getInstance(this).client = NaverMapSdk.NaverCloudPlatformClient("kd3ptmxe5c")
@@ -108,7 +122,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             supportActionBar?.setDisplayShowTitleEnabled(true)
 
             btnAddPhoto.setOnClickListener {
-                imagePickLauncher.launch("image/*")
+//                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+//                    photoPickLauncher.launch(PickVisualMediaRequest())
+//                else
+                    imagePickLauncher.launch("image/*")
+            }
+            btnAddPhoto.setOnLongClickListener {
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                    photoPickLauncher.launch(PickVisualMediaRequest())
+                true
             }
         }
     }
@@ -126,8 +148,81 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // Android 13 이상 PhotoPicker 사용
+    private val photoPickLauncher = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { result ->
+        result?.let {
+            usePhotoPicker = true
+            it.forEach { uri ->
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) // 액세스 권한 유지
+                makeOverlay_13(uri)
+            }
+        }
+    }
+
+    private fun makeOverlay_13(uri: Uri) {
+        Log.e("makeOverlay()")
+        Log.e("uri >> $uri")
+
+        if(usePhotoPicker) {
+            contentResolver.openInputStream(uri).use { inStream ->
+                inStream?.let { stream ->
+                    Log.e("inputStream not null ~")
+//                    val targetFile = File(filesDir, "tempPhoto")
+//                    val fos = FileOutputStream(targetFile)
+//                    val buffer = ByteArray(4 * 1024)
+//                    targetFile.inputStream().use {
+//                        while(it.read(buffer) != -1) {
+//                            fos.write(buffer, 0, it.read(buffer, 0, 1024))
+//                        }
+//                    }
+//
+//                    return targetFile.absolutePath
+                    val exif = ExifInterface(stream)
+                    exif.latLong?.let {
+                        val address: String
+                        try {
+                            address = getAddress(it[0], it[1])
+                        } catch(e: IllegalStateException) {
+                            return
+                        }
+                        // Save into room
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                PmDatabase.getInstance(this@MainActivity).getPmDAO()
+                                    .insertPhoto(PhotoEntity(
+                                        uri, it[0], it[1], address, convertTakeDateTime(exif.getAttribute(ExifInterface.TAG_DATETIME)!!)
+                                    ))
+                                withContext(Dispatchers.Main) {
+                                    initOverlay(uri, it[0], it[1], address)
+                                    naverMap.cameraPosition = CameraPosition(LatLng(it[0], it[1]), 15.0)
+                                    markerList.forEach { map ->
+                                        map[uri.toString()]?.performClick()
+                                    }
+                                    savedPhotoCount.value = savedPhotoCount.value?.plus(1)
+                                }
+                            } catch(e: SQLiteConstraintException) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(this@MainActivity, getString(R.string.msg_not_allowed_duplication), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+
+                    } ?: run {
+                        Toast.makeText(this@MainActivity, getString(R.string.msg_uri_is_null), Toast.LENGTH_SHORT).show()
+                    }
+
+                } ?: run {
+                    Log.e("inputStream not null.. not found file with uri")
+//                    return null
+                }
+            }
+        }
+    }
     private fun makeOverlay(uri: Uri) {
+        Log.e("makeOverlay()")
+        Log.e("uri >> $uri")
         getAbsolutePath(this@MainActivity, uri)?.let { path ->
+            Log.e("path of uri.. >> $path")
             val exif = ExifInterface(path)
             exif.latLong?.let {
                 val address: String
@@ -461,6 +556,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     Build.VERSION_CODES.TIRAMISU -> {
                         permissionArray.apply {
                             add(Manifest.permission.READ_MEDIA_IMAGES)
+                            add(Manifest.permission.READ_MEDIA_VIDEO)
                             remove(Manifest.permission.READ_EXTERNAL_STORAGE)
                         }
                     }
