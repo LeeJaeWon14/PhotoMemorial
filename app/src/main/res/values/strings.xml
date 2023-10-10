@@ -28,4 +28,7 @@
     <string name="str_desc_zoom">오른쪽 버튼을 사용하여 지도를 줌인, 줌아웃합니다.</string>
     
     <string name="standard_uri">media/external/images/media/</string>
+
+    <string name="share_to_kakao_talk">카카오톡으로 공유</string>
+    <string name="share_to_other">공유하기</string>
 </resources>

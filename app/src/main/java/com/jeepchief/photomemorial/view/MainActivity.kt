@@ -20,6 +20,7 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +29,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.exifinterface.media.ExifInterface
@@ -46,6 +48,9 @@ import com.jeepchief.photomemorial.util.Pref
 import com.jeepchief.photomemorial.view.adapter.SearchListAdapter
 import com.jeepchief.photomemorial.view.adapter.ShowAroundAdapter
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
+import com.kakao.sdk.share.ShareClient
+import com.kakao.sdk.template.model.Link
+import com.kakao.sdk.template.model.TextTemplate
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
 import com.naver.maps.map.overlay.InfoWindow
@@ -81,6 +86,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
         locationManager = getSystemService(LocationManager::class.java)
 
@@ -431,12 +437,54 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                     dlg.dismiss()
                                 }
                                 ivShareButton.setOnClickListener {
-                                    startActivity(Intent(
-                                        Intent.ACTION_SEND
-                                    ).apply {
-                                        type = "image/*"
-                                        putExtra(Intent.EXTRA_STREAM, photo)
-                                    })
+                                    val popup = PopupMenu(this@MainActivity, it)
+                                    menuInflater.inflate(R.menu.menu_share, popup.menu)
+                                    popup.apply {
+                                        setOnMenuItemClickListener {
+                                            when(it.itemId) {
+                                                R.id.menu_to_kakao -> {
+                                                    if(ShareClient.instance.isKakaoTalkSharingAvailable(this@MainActivity)) {
+                                                        ShareClient.instance.shareDefault(
+                                                            this@MainActivity,
+                                                            TextTemplate(
+                                                                text = address,
+                                                                link = Link()
+                                                            )
+                                                        ) { result, error ->
+                                                            error?.let {
+                                                                Toast.makeText(
+                                                                    this@MainActivity,
+                                                                    it.toString(),
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                            }
+                                                            result?.let {
+                                                                startActivity(it.intent)
+                                                            }
+                                                        }
+                                                    }
+                                                    else {
+                                                        Toast.makeText(
+                                                            this@MainActivity,
+                                                            "카카오톡 미설치..",
+                                                            Toast.LENGTH_SHORT
+                                                        )
+                                                            .show()
+                                                    }
+                                                }
+                                                R.id.menu_to_other -> {
+                                                    startActivity(Intent(
+                                                        Intent.ACTION_SEND
+                                                    ).apply {
+                                                        type = "image/*"
+                                                        putExtra(Intent.EXTRA_STREAM, photo)
+                                                    })
+                                                }
+                                            }
+                                            return@setOnMenuItemClickListener true
+                                        }
+                                        show()
+                                    }
                                 }
                                 tvTakeDate.text = takeDate
                                 tvTakeLocation.text = address
