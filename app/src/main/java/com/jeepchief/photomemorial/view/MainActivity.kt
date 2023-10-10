@@ -49,7 +49,9 @@ import com.jeepchief.photomemorial.view.adapter.SearchListAdapter
 import com.jeepchief.photomemorial.view.adapter.ShowAroundAdapter
 import com.jeepchief.photomemorial.viewmodel.MainViewModel
 import com.kakao.sdk.share.ShareClient
+import com.kakao.sdk.template.model.Content
 import com.kakao.sdk.template.model.Link
+import com.kakao.sdk.template.model.LocationTemplate
 import com.kakao.sdk.template.model.TextTemplate
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
@@ -446,9 +448,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                                     if(ShareClient.instance.isKakaoTalkSharingAvailable(this@MainActivity)) {
                                                         ShareClient.instance.shareDefault(
                                                             this@MainActivity,
-                                                            TextTemplate(
-                                                                text = address,
-                                                                link = Link()
+//                                                            TextTemplate(
+//                                                                text = address,
+//                                                                link = Link()
+//                                                            )
+                                                            LocationTemplate(
+                                                                address = address,
+                                                                content = Content(
+                                                                    title = takeDate,
+                                                                    description = """
+                                                                        '자세히 보기'를 클릭하면 앱으로 이동합니다.
+                                                                    """.trimIndent(),
+                                                                    imageUrl = "",
+                                                                    link = Link(
+                                                                        webUrl = "https://velog.io/@jeep_chief_14",
+                                                                        mobileWebUrl = "https://velog.io/@jeep_chief_14"
+                                                                    )
+                                                                )
                                                             )
                                                         ) { result, error ->
                                                             error?.let {
